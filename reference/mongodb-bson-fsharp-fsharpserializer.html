@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>FSharpSerializer - MongoDB.Bson.FSharp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content=""/>
+    <meta name="author" content="Andreas Vilinski <vilinski@yahoo.de>"/>
+
+    <script src="https://code.jquery.com/jquery-1.8.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.8.23/jquery-ui.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet"/>
+
+    <link type="text/css" rel="stylesheet" href="/MongoDB.Bson.FSharp/content/style.css" />
+    <script type="text/javascript" src="/MongoDB.Bson.FSharp/content/tips.js"></script>
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="container">
+      <div class="masthead">
+        <ul class="nav nav-pills pull-right">
+          <li><a href="http://fsharp.org">fsharp.org</a></li>
+          <li><a href="https://github.com/vilinski/MongoDB.Bson.FSharp">github page</a></li>
+        </ul>
+        <h3 class="muted"><a href="/MongoDB.Bson.FSharp/index.html">MongoDB.Bson.FSharp</a></h3>
+      </div>
+      <hr />
+      <div class="row">
+        <div class="span9" id="main">
+          
+
+
+
+<h1>FSharpSerializer</h1>
+<p>
+  <span>Namespace: MongoDB.Bson.FSharp</span><br />
+</p>
+<div class="xmldoc">
+<p>Registers the bson serializers and conventions for F# data types</p>
+
+</div>
+
+<!-- Render nested types and modules, if there are any -->
+
+  <h3>Functions and values</h3>
+  <table class="table table-bordered member-list">
+    <thead>
+      <tr><td>Function or value</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '5', 5)" onmouseover="showTip(event, '5', 5)">
+            Register ()
+          </code>
+          <div class="tip" id="5">
+            <strong>Signature:</strong> unit -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="https://github.com/vilinski/MongoDB.Bson.FSharp/tree/master/src/MongoDB.Bson.FSharp/MongoDB.Bson.FSharp.fs#L308-308" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Registers the bson serializers and conventions for F# data types
+Call it before the code using implicit bson serializers</p>
+<h2>Example</h2>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">data</span> <span class="o">=</span> <span class="i">MyComplexFSharDataType</span>()
+<span class="k">let</span> <span class="i">bsonDocument</span> <span class="o">=</span> <span class="i">data</span> <span class="o">|&gt;</span> <span class="i">toBson</span>
+<span class="k">let</span> <span class="i">bsonArray</span> <span class="o">=</span> <span class="i">data</span> <span class="o">|&gt;</span> <span class="i">toBsonArray</span>
+</code></pre></td>
+</tr>
+</table>
+
+
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+        </div>
+        <div class="span3">
+          <img src="/MongoDB.Bson.FSharp/img/logo.png" alt="F# Project" style="width:150px;margin:10px" />  
+          <ul class="nav nav-list" id="menu" style="margin-top: 20px;">
+            <li class="nav-header">MongoDB.Bson.FSharp</li>
+            <li><a href="/MongoDB.Bson.FSharp/index.html">Home page</a></li>
+            <li class="divider"></li>
+            <li><a href="http://nuget.org/packages/MongoDB.Bson.FSharp">Get Library via NuGet</a></li>
+            <li><a href="https://github.com/vilinski/MongoDB.Bson.FSharp">Source Code on GitHub</a></li>
+            <li><a href="/MongoDB.Bson.FSharp/license.html">License</a></li>
+            <li><a href="/MongoDB.Bson.FSharp/release-notes.html">Release Notes</a></li>
+            
+            <li class="nav-header">Getting started</li>
+            <li><a href="/MongoDB.Bson.FSharp/tutorial.html">Sample tutorial</a></li>
+
+            <li class="nav-header">Documentation</li>
+            <li><a href="/MongoDB.Bson.FSharp/reference/index.html">API Reference</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <a href="https://github.com/vilinski/MongoDB.Bson.FSharp"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub"/></a>
+  </body>
+  </html>

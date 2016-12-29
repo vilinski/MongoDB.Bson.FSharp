@@ -59,15 +59,15 @@
             fromBson doc
           </code>
           <div class="tip" id="1">
-            <strong>Signature:</strong> doc:BsonDocument -&gt; &#39;?8341<br />
-                          <strong>Type parameters:</strong> '?8341          </div>
+            <strong>Signature:</strong> doc:BsonDocument -&gt; &#39;?8343<br />
+                          <strong>Type parameters:</strong> '?8343          </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/vilinski/MongoDB.Bson.FSharp/tree/master/src/MongoDB.Bson.FSharp/MongoDB.Bson.FSharp.fs#L325-325" class="github-link">
+            <a href="https://github.com/vilinski/MongoDB.Bson.FSharp/tree/master/src/MongoDB.Bson.FSharp/MongoDB.Bson.FSharp.fs#L330-330" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>deserializes the bson document to the specified instance</p>
+          <p>Deserializes an object from a <code>BsonDocument</code></p>
 
 
         </td>
@@ -79,15 +79,15 @@
             fromBsonArray array
           </code>
           <div class="tip" id="2">
-            <strong>Signature:</strong> array:byte array -&gt; &#39;a<br />
-                          <strong>Type parameters:</strong> 'a          </div>
+            <strong>Signature:</strong> array:byte array -&gt; &#39;?8347<br />
+                          <strong>Type parameters:</strong> '?8347          </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/vilinski/MongoDB.Bson.FSharp/tree/master/src/MongoDB.Bson.FSharp/MongoDB.Bson.FSharp.fs#L327-327" class="github-link">
+            <a href="https://github.com/vilinski/MongoDB.Bson.FSharp/tree/master/src/MongoDB.Bson.FSharp/MongoDB.Bson.FSharp.fs#L336-336" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>deserializes the binary bson byte array to the specified instance</p>
+          <p>Deserializes an object from a BSON byte array</p>
 
 
         </td>
@@ -96,18 +96,18 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '3', 3)" onmouseover="showTip(event, '3', 3)">
-            toBson arg00
+            fromJson json
           </code>
           <div class="tip" id="3">
-            <strong>Signature:</strong> arg00:&#39;?8337 -&gt; BsonDocument<br />
-                          <strong>Type parameters:</strong> '?8337          </div>
+            <strong>Signature:</strong> json:string -&gt; &#39;?8345<br />
+                          <strong>Type parameters:</strong> '?8345          </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/vilinski/MongoDB.Bson.FSharp/tree/master/src/MongoDB.Bson.FSharp/MongoDB.Bson.FSharp.fs#L321-321" class="github-link">
+            <a href="https://github.com/vilinski/MongoDB.Bson.FSharp/tree/master/src/MongoDB.Bson.FSharp/MongoDB.Bson.FSharp.fs#L333-333" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>serializes the input to a bson document</p>
+          <p>Seserializes an object from a JSON string</p>
 
 
         </td>
@@ -116,18 +116,58 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '4', 4)" onmouseover="showTip(event, '4', 4)">
-            toBsonArray arg00
+            toBson arg00
           </code>
           <div class="tip" id="4">
+            <strong>Signature:</strong> arg00:&#39;?8337 -&gt; BsonDocument<br />
+                          <strong>Type parameters:</strong> '?8337          </div>
+        </td>
+        <td class="xmldoc">
+            <a href="https://github.com/vilinski/MongoDB.Bson.FSharp/tree/master/src/MongoDB.Bson.FSharp/MongoDB.Bson.FSharp.fs#L321-321" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Serializes an object to a <code>BsonDocument</code></p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '5', 5)" onmouseover="showTip(event, '5', 5)">
+            toBsonArray arg00
+          </code>
+          <div class="tip" id="5">
             <strong>Signature:</strong> arg00:&#39;?8339 -&gt; byte []<br />
                           <strong>Type parameters:</strong> '?8339          </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/vilinski/MongoDB.Bson.FSharp/tree/master/src/MongoDB.Bson.FSharp/MongoDB.Bson.FSharp.fs#L323-323" class="github-link">
+            <a href="https://github.com/vilinski/MongoDB.Bson.FSharp/tree/master/src/MongoDB.Bson.FSharp/MongoDB.Bson.FSharp.fs#L324-324" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>serializes the input to a binary bson - byte array</p>
+          <p>Serializes an object to a BSON byte array</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '6', 6)" onmouseover="showTip(event, '6', 6)">
+            toJson arg00
+          </code>
+          <div class="tip" id="6">
+            <strong>Signature:</strong> arg00:&#39;?8341 -&gt; string<br />
+                          <strong>Type parameters:</strong> '?8341          </div>
+        </td>
+        <td class="xmldoc">
+            <a href="https://github.com/vilinski/MongoDB.Bson.FSharp/tree/master/src/MongoDB.Bson.FSharp/MongoDB.Bson.FSharp.fs#L327-327" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>serializes an object to a JSON string</p>
 
 
         </td>

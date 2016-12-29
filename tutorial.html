@@ -56,46 +56,63 @@
 <span class="l">19: </span>
 <span class="l">20: </span>
 <span class="l">21: </span>
+<span class="l">22: </span>
+<span class="l">23: </span>
+<span class="l">24: </span>
+<span class="l">25: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="prep">#r</span> <span class="s">&quot;MongoDB.Bson.dll&quot;</span>
 <span class="prep">#r</span> <span class="s">&quot;MongoDB.Bson.FSharp.dll&quot;</span>
-<span class="k">open</span> <span class="i">MongoDB</span><span class="o">.</span><span class="i">Bson</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs1', 1)" onmouseover="showTip(event, 'fs1', 1)" class="i">FSharp</span>
+<span class="k">open</span> <span onmouseout="hideTip(event, 'fs1', 1)" onmouseover="showTip(event, 'fs1', 1)" class="i">MongoDB</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs2', 2)" onmouseover="showTip(event, 'fs2', 2)" class="i">Bson</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs3', 3)" onmouseover="showTip(event, 'fs3', 3)" class="i">FSharp</span>
 
-<span class="k">type</span> <span onmouseout="hideTip(event, 'fs2', 2)" onmouseover="showTip(event, 'fs2', 2)" class="t">Twitter</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs3', 3)" onmouseover="showTip(event, 'fs3', 3)" class="t">string</span>
-<span class="k">type</span> <span onmouseout="hideTip(event, 'fs4', 4)" onmouseover="showTip(event, 'fs4', 4)" class="t">EMailAddress</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs3', 5)" onmouseover="showTip(event, 'fs3', 5)" class="t">string</span>
-<span class="k">type</span> <span onmouseout="hideTip(event, 'fs5', 6)" onmouseover="showTip(event, 'fs5', 6)" class="t">PreferedContact</span> <span class="o">=</span>
-    | <span onmouseout="hideTip(event, 'fs6', 7)" onmouseover="showTip(event, 'fs6', 7)" class="p">NoContact</span>
-    | <span onmouseout="hideTip(event, 'fs7', 8)" onmouseover="showTip(event, 'fs7', 8)" class="p">Twitter</span> <span class="k">of</span> <span onmouseout="hideTip(event, 'fs7', 9)" onmouseover="showTip(event, 'fs7', 9)" class="t">Twitter</span>
-    | <span onmouseout="hideTip(event, 'fs8', 10)" onmouseover="showTip(event, 'fs8', 10)" class="p">EMail</span> <span class="k">of</span> <span onmouseout="hideTip(event, 'fs4', 11)" onmouseover="showTip(event, 'fs4', 11)" class="t">EMailAddress</span>
+<span class="k">type</span> <span onmouseout="hideTip(event, 'fs4', 4)" onmouseover="showTip(event, 'fs4', 4)" class="t">Twitter</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs5', 5)" onmouseover="showTip(event, 'fs5', 5)" class="t">string</span>
+<span class="k">type</span> <span onmouseout="hideTip(event, 'fs6', 6)" onmouseover="showTip(event, 'fs6', 6)" class="t">EMailAddress</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs5', 7)" onmouseover="showTip(event, 'fs5', 7)" class="t">string</span>
+<span class="k">type</span> <span onmouseout="hideTip(event, 'fs7', 8)" onmouseover="showTip(event, 'fs7', 8)" class="t">PreferedContact</span> <span class="o">=</span>
+    | <span onmouseout="hideTip(event, 'fs8', 9)" onmouseover="showTip(event, 'fs8', 9)" class="p">NoContact</span>
+    | <span onmouseout="hideTip(event, 'fs9', 10)" onmouseover="showTip(event, 'fs9', 10)" class="p">Twitter</span> <span class="k">of</span> <span onmouseout="hideTip(event, 'fs9', 11)" onmouseover="showTip(event, 'fs9', 11)" class="t">Twitter</span>
+    | <span onmouseout="hideTip(event, 'fs10', 12)" onmouseover="showTip(event, 'fs10', 12)" class="p">EMail</span> <span class="k">of</span> <span onmouseout="hideTip(event, 'fs6', 13)" onmouseover="showTip(event, 'fs6', 13)" class="t">EMailAddress</span>
 
-<span class="k">type</span> <span onmouseout="hideTip(event, 'fs9', 12)" onmouseover="showTip(event, 'fs9', 12)" class="t">Person</span> <span class="o">=</span>
-    { <span onmouseout="hideTip(event, 'fs10', 13)" onmouseover="showTip(event, 'fs10', 13)" class="i">name</span><span class="o">:</span> <span onmouseout="hideTip(event, 'fs3', 14)" onmouseover="showTip(event, 'fs3', 14)" class="t">string</span>
-      <span onmouseout="hideTip(event, 'fs11', 15)" onmouseover="showTip(event, 'fs11', 15)" class="i">contact</span><span class="o">:</span> <span onmouseout="hideTip(event, 'fs5', 16)" onmouseover="showTip(event, 'fs5', 16)" class="t">PreferedContact</span>
+<span class="k">type</span> <span onmouseout="hideTip(event, 'fs11', 14)" onmouseover="showTip(event, 'fs11', 14)" class="t">Person</span> <span class="o">=</span>
+    { <span onmouseout="hideTip(event, 'fs12', 15)" onmouseover="showTip(event, 'fs12', 15)" class="i">name</span><span class="o">:</span> <span onmouseout="hideTip(event, 'fs5', 16)" onmouseover="showTip(event, 'fs5', 16)" class="t">string</span>
+      <span onmouseout="hideTip(event, 'fs13', 17)" onmouseover="showTip(event, 'fs13', 17)" class="i">contact</span><span class="o">:</span> <span onmouseout="hideTip(event, 'fs7', 18)" onmouseover="showTip(event, 'fs7', 18)" class="t">PreferedContact</span>
     }
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs12', 17)" onmouseover="showTip(event, 'fs12', 17)" class="i">me</span> <span class="o">=</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs14', 19)" onmouseover="showTip(event, 'fs14', 19)" class="i">me</span> <span class="o">=</span>
     { <span class="i">name</span> <span class="o">=</span> <span class="s">&quot;Andreas Vilinski&quot;</span>
-      <span class="i">contact</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs7', 18)" onmouseover="showTip(event, 'fs7', 18)" class="p">Twitter</span> <span class="s">&quot;@vilinski&quot;</span>
+      <span class="i">contact</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs9', 20)" onmouseover="showTip(event, 'fs9', 20)" class="p">Twitter</span> <span class="s">&quot;@vilinski&quot;</span>
     }
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs13', 19)" onmouseover="showTip(event, 'fs13', 19)" class="i">test</span> <span class="o">=</span>
-    <span onmouseout="hideTip(event, 'fs12', 20)" onmouseover="showTip(event, 'fs12', 20)" class="i">me</span> <span class="o">|&gt;</span> <span class="i">toBson</span> <span class="o">|&gt;</span> <span class="i">fromBson</span>
+
+<span class="k">do</span> <span onmouseout="hideTip(event, 'fs15', 21)" onmouseover="showTip(event, 'fs15', 21)" class="t">FSharpSerializer</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs16', 22)" onmouseover="showTip(event, 'fs16', 22)" class="f">Register</span>()
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs17', 23)" onmouseover="showTip(event, 'fs17', 23)" class="f">test</span>() <span class="o">=</span>
+    <span class="k">let</span> <span onmouseout="hideTip(event, 'fs18', 24)" onmouseover="showTip(event, 'fs18', 24)" class="i">canBson</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs14', 25)" onmouseover="showTip(event, 'fs14', 25)" class="i">me</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs19', 26)" onmouseover="showTip(event, 'fs19', 26)" class="f">toBson</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs20', 27)" onmouseover="showTip(event, 'fs20', 27)" class="f">fromBson</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs14', 28)" onmouseover="showTip(event, 'fs14', 28)" class="i">me</span>
+    <span class="k">let</span> <span onmouseout="hideTip(event, 'fs21', 29)" onmouseover="showTip(event, 'fs21', 29)" class="i">canJson</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs14', 30)" onmouseover="showTip(event, 'fs14', 30)" class="i">me</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs22', 31)" onmouseover="showTip(event, 'fs22', 31)" class="f">toJson</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs23', 32)" onmouseover="showTip(event, 'fs23', 32)" class="f">fromJson</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs14', 33)" onmouseover="showTip(event, 'fs14', 33)" class="i">me</span>
+    <span onmouseout="hideTip(event, 'fs18', 34)" onmouseover="showTip(event, 'fs18', 34)" class="i">canBson</span> <span class="o">&amp;&amp;</span> <span onmouseout="hideTip(event, 'fs21', 35)" onmouseover="showTip(event, 'fs21', 35)" class="i">canJson</span>
 </code></pre></td>
 </tr>
 </table>
-<p>Some more info</p>
 
-<div class="tip" id="fs1">namespace Microsoft.FSharp</div>
-<div class="tip" id="fs2">type Twitter = string<br /><br />Full name: Tutorial.Twitter</div>
-<div class="tip" id="fs3">Multiple items<br />val string : value:&#39;T -&gt; string<br /><br />Full name: Microsoft.FSharp.Core.Operators.string<br /><br />--------------------<br />type string = System.String<br /><br />Full name: Microsoft.FSharp.Core.string</div>
-<div class="tip" id="fs4">type EMailAddress = string<br /><br />Full name: Tutorial.EMailAddress</div>
-<div class="tip" id="fs5">type PreferedContact =<br />&#160;&#160;| NoContact<br />&#160;&#160;| Twitter of Twitter<br />&#160;&#160;| EMail of EMailAddress<br /><br />Full name: Tutorial.PreferedContact</div>
-<div class="tip" id="fs6">union case PreferedContact.NoContact: PreferedContact</div>
-<div class="tip" id="fs7">Multiple items<br />union case PreferedContact.Twitter: Twitter -&gt; PreferedContact<br /><br />--------------------<br />type Twitter = string<br /><br />Full name: Tutorial.Twitter</div>
-<div class="tip" id="fs8">union case PreferedContact.EMail: EMailAddress -&gt; PreferedContact</div>
-<div class="tip" id="fs9">type Person =<br />&#160;&#160;{name: string;<br />&#160;&#160;&#160;contact: PreferedContact;}<br /><br />Full name: Tutorial.Person</div>
-<div class="tip" id="fs10">Person.name: string</div>
-<div class="tip" id="fs11">Person.contact: PreferedContact</div>
-<div class="tip" id="fs12">val me : Person<br /><br />Full name: Tutorial.me</div>
-<div class="tip" id="fs13">val test : obj<br /><br />Full name: Tutorial.test</div>
+<div class="tip" id="fs1">namespace MongoDB</div>
+<div class="tip" id="fs2">namespace MongoDB.Bson</div>
+<div class="tip" id="fs3">namespace MongoDB.Bson.FSharp</div>
+<div class="tip" id="fs4">type Twitter = string<br /><br />Full name: Tutorial.Twitter</div>
+<div class="tip" id="fs5">Multiple items<br />val string : value:&#39;T -&gt; string<br /><br />Full name: Microsoft.FSharp.Core.Operators.string<br /><br />--------------------<br />type string = System.String<br /><br />Full name: Microsoft.FSharp.Core.string</div>
+<div class="tip" id="fs6">type EMailAddress = string<br /><br />Full name: Tutorial.EMailAddress</div>
+<div class="tip" id="fs7">type PreferedContact =<br />&#160;&#160;| NoContact<br />&#160;&#160;| Twitter of Twitter<br />&#160;&#160;| EMail of EMailAddress<br /><br />Full name: Tutorial.PreferedContact</div>
+<div class="tip" id="fs8">union case PreferedContact.NoContact: PreferedContact</div>
+<div class="tip" id="fs9">Multiple items<br />union case PreferedContact.Twitter: Twitter -&gt; PreferedContact<br /><br />--------------------<br />type Twitter = string<br /><br />Full name: Tutorial.Twitter</div>
+<div class="tip" id="fs10">union case PreferedContact.EMail: EMailAddress -&gt; PreferedContact</div>
+<div class="tip" id="fs11">type Person =<br />&#160;&#160;{name: string;<br />&#160;&#160;&#160;contact: PreferedContact;}<br /><br />Full name: Tutorial.Person</div>
+<div class="tip" id="fs12">Person.name: string</div>
+<div class="tip" id="fs13">Person.contact: PreferedContact</div>
+<div class="tip" id="fs14">val me : Person<br /><br />Full name: Tutorial.me</div>
+<div class="tip" id="fs15">module FSharpSerializer<br /><br />from MongoDB.Bson.FSharp</div>
+<div class="tip" id="fs16">val Register : unit -&gt; unit<br /><br />Full name: MongoDB.Bson.FSharp.FSharpSerializer.Register</div>
+<div class="tip" id="fs17">val test : unit -&gt; bool<br /><br />Full name: Tutorial.test</div>
+<div class="tip" id="fs18">val canBson : bool</div>
+<div class="tip" id="fs19">val toBson : arg00:&#39;a -&gt; MongoDB.Bson.BsonDocument<br /><br />Full name: MongoDB.Bson.FSharp.BsonExtensionMethods.toBson</div>
+<div class="tip" id="fs20">val fromBson : doc:MongoDB.Bson.BsonDocument -&gt; &#39;a<br /><br />Full name: MongoDB.Bson.FSharp.BsonExtensionMethods.fromBson</div>
+<div class="tip" id="fs21">val canJson : bool</div>
+<div class="tip" id="fs22">val toJson : arg00:&#39;a -&gt; string<br /><br />Full name: MongoDB.Bson.FSharp.BsonExtensionMethods.toJson</div>
+<div class="tip" id="fs23">val fromJson : json:string -&gt; &#39;a<br /><br />Full name: MongoDB.Bson.FSharp.BsonExtensionMethods.fromJson</div>
 
         </div>
         <div class="span3">

@@ -317,11 +317,20 @@ module FSharpSerializer =
 /// functions wrapping the C# extension methods
 [<AutoOpen>]
 module BsonExtensionMethods =
-    /// serializes the input to a bson document
+    /// Serializes an object to a `BsonDocument`
     let toBson = MongoDB.Bson.BsonExtensionMethods.ToBsonDocument
-    /// serializes the input to a binary bson - byte array
+
+    /// Serializes an object to a BSON byte array
     let toBsonArray = MongoDB.Bson.BsonExtensionMethods.ToBson
-    /// deserializes the bson document to the specified instance
-    let fromBson (doc: BsonDocument) = BsonSerializer.Deserialize<_> doc
-    /// deserializes the binary bson byte array to the specified instance
-    let fromBsonArray<'a> (array: byte array) : 'a = BsonSerializer.Deserialize<'a> array
+
+    /// serializes an object to a JSON string
+    let toJson = MongoDB.Bson.BsonExtensionMethods.ToJson
+
+    /// Deserializes an object from a `BsonDocument`
+    let fromBson (doc: BsonDocument) = BsonSerializer.Deserialize doc
+
+    /// Seserializes an object from a JSON string
+    let fromJson (json: string) = BsonSerializer.Deserialize json
+
+    /// Deserializes an object from a BSON byte array
+    let fromBsonArray (array: byte array) = BsonSerializer.Deserialize array

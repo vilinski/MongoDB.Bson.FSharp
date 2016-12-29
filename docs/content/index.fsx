@@ -1,7 +1,7 @@
 (*** hide ***)
 // This block of code is omitted in the generated HTML documentation. Use
 // it to define helpers that you do not want to show in the documentation.
-#I "../../bin"
+#I "../../bin/MongoDB.Bson.FSharp"
 
 (**
 MongoDB.Bson.FSharp
@@ -46,11 +46,15 @@ let me =
     { name = "Andreas Vilinski"
       contact = Twitter "@vilinski"
     }
-let test =
-    me |> toBson |> fromBson
+
+do FSharpSerializer.Register()
+let test() =
+    let canBson = me |> toBson |> fromBson = me
+    let canJson = me |> toJson |> fromJson = me
+    canBson && canJson
+
 
 (**
-Some more info
 
 Samples & documentation
 -----------------------

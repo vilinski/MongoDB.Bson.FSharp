@@ -11,11 +11,16 @@ let toBsonDocument() =
     Expect.equal (testItems |> toBson |> fromBson) testItems "test items serializing"
 let toBsonArray() =
     Expect.equal (testItems |> toBson |> fromBson) testItems "test items serializing"
+    Expect.equal (testItems |> toBson |> fromBson) testItems "test items serializing"
+let toJsonString() =
+    testItems |> toJson |> printfn "%s"
+    Expect.equal (testItems |> toJson |> fromJson) testItems "test items serializing"
 
 [<Tests>]
 let tests =
     testList "bson" [
         testCase "from/to BsonDocument" toBsonDocument
+        testCase "from/to json string" toJsonString
         testCase "from/to Bson byte array" toBsonArray
     ]
 

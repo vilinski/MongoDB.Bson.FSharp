@@ -157,7 +157,7 @@ Target "Publish" (fun _ ->
 let release _ =
     let branch = Git.Information.getBranchName ""
     let version = releaseNotes.NugetVersion
-    //if Git.Information.getBranchName "" <> "master" then failwithf "Not on master, instead on '%s'" branch
+    if Git.Information.getBranchName "" <> "master" then failwithf "Not on master, instead on '%s'" branch
 
     StageAll ""
     Git.Commit.Commit "" (sprintf "Bump version to %s" version)

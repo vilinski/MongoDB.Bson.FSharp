@@ -1,21 +1,14 @@
-framework: net45
-
 source https://nuget.org/api/v2
 
 nuget FSharp.Core redirects: force
 nuget MongoDB.Bson
 
 group Build
-  source https://nuget.org/api/v2
-
-  nuget SourceLink.Fake
-  nuget FAKE
-  nuget FSharp.Formatting
-
-  github fsharp/FAKE modules/Octokit/Octokit.fsx
+    source https://nuget.org/api/v2
+    nuget FAKE
 
 group Test
-  source https://nuget.org/api/v2
+    source https://nuget.org/api/v2
 
-  nuget FSharp.Core redirects: force
-  nuget Expecto
+    nuget FSharp.Core redirects: force
+    nuget Expecto

@@ -18,23 +18,15 @@ let toJsonString() =
 
 [<Tests>]
 let tests =
+  testList "all" [
+    testList "samples" [
+      testCase "Say hello all" <| fun _ ->
+        let subject = Say.hello "all"
+        Expect.equal subject "Hello all" "You didn't say hello"
+    ]
     testList "bson" [
         testCase "from/to BsonDocument" toBsonDocument
         testCase "from/to json string" toJsonString
         testCase "from/to Bson byte array" toBsonArray
     ]
-
-(*
-
-open NUnit.Framework
-
-[<Test>]
-let ``hello returns 42`` () =
-  let result = Library.hello 42
-  printfn "%i" result
-  Assert.AreEqual(42,result)
-*)
-
-[<EntryPoint>]
-let main argv =
-    Tests.runTestsInAssembly defaultConfig argv
+  ]

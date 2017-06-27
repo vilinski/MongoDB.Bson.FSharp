@@ -1,9 +1,26 @@
-language: csharp
+language: csharp  
+sudo: required  
+dist: trusty  
 
-sudo: false  # use the new container-based Travis infrastructure 
+dotnet: 1.0.1
+mono:
+  - 4.6.1
+  - 4.8.1
+  - latest # => "stable release"
+  - alpha
+  - beta
+  - weekly # => "latest commits"
+os:  
+  - linux
+  - osx 
 
-before_install:
-  - chmod +x build.sh
- 
-script: 
-  - ./build.sh All
+script:  
+  - ./build.sh
+
+matrix:
+  allow_failures:
+    - mono: latest
+    - mono: alpha
+    - mono: beta
+    - mono: weekly
+    - os: osx # times out too often, disable at own risk

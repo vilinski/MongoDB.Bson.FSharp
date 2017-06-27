@@ -18,19 +18,19 @@ module internal Helpers =
 
     let IsOption objType =
         IsUnion objType &&
-        objType.IsGenericType &&
+        objType.GetTypeInfo().IsGenericType &&
         objType.GetGenericTypeDefinition() = typedefof<_ option>
 
     let IsList objType = IsUnion objType &&
-                            objType.IsGenericType &&
+                            objType.GetTypeInfo().IsGenericType &&
                             objType.GetGenericTypeDefinition() = typedefof<_ list>
 
     let IsMap (objType: Type) =
-        objType.IsGenericType &&
+        objType.GetTypeInfo().IsGenericType &&
         objType.GetGenericTypeDefinition() = typedefof<Map<_,_>>
 
     let IsSet (objType: Type) =
-        objType.IsGenericType &&
+        objType.GetTypeInfo().IsGenericType &&
         objType.GetGenericTypeDefinition() = typedefof<Set<_>>
 
     let GetUnionCases objType =
@@ -65,6 +65,24 @@ module internal Helpers =
             serializer
         |> configureChildDictSerializer representation
 
+    let serializeSeq (context: BsonSerializationContext) (serializer: 'a IBsonSerializer) (items: 'a seq) =
+        let writer = context.Writer
+        writer.WriteStartArray()
+        for item in items do
+            serializer.Serialize(context, item)
+        writer.WriteEndArray()
+    let deserializeSeq (context: BsonDeserializationContext) (serializer: 'a IBsonSerializer)=
+        let reader = context.Reader
+        reader.ReadStartArray()
+        let acc = ResizeArray()
+        while reader.ReadBsonType() <> BsonType.EndOfDocument do
+            let item = serializer.Deserialize(context)
+            acc.Add item
+
+        reader.ReadEndArray()
+        // let res = serializer.Deserialize(context, args)
+        // res |> unbox |> List.ofSeq<'a>
+        acc
 type OptionConvention() =
     inherit ConventionBase("F# Option Type")
 
@@ -209,7 +227,7 @@ type OptionSerializer<'a when 'a: equality>() =
         let genericTypeArgument = typeof<'a>
 
         let (case, args) =
-                let value = if (genericTypeArgument.IsPrimitive) then
+                let value = if (genericTypeArgument.GetTypeInfo().IsPrimitive) then
                                 BsonSerializer.Deserialize(context.Reader, typeof<obj>)
                             else
                                 BsonSerializer.Deserialize(context.Reader, genericTypeArgument)
@@ -220,15 +238,13 @@ type OptionSerializer<'a when 'a: equality>() =
 
 type ListSerializer<'a>() =
     inherit SerializerBase<'a list>()
-
-    let serializer = EnumerableInterfaceImplementerSerializer<ResizeArray<'a>, 'a>()
+    let itemSerializer = lazy (BsonSerializer.SerializerRegistry.GetSerializer<'a>())
 
     override this.Serialize(context, args, value) =
-        serializer.Serialize(context, args, ResizeArray value)
+        serializeSeq context itemSerializer.Value value
 
     override this.Deserialize(context, args) =
-        let res = serializer.Deserialize(context, args)
-        res |> unbox |> List.ofSeq<'a>
+        deserializeSeq context itemSerializer.Value |> List.ofSeq
 
 type MapSerializer<'k, 'v when 'k: comparison>() =
     inherit SerializerBase<Map<'k, 'v>>()
@@ -255,16 +271,14 @@ type MapSerializer<'k, 'v when 'k: comparison>() =
         |> Map.ofSeq<'k,'v>
 
 type SetSerializer<'a when 'a: comparison>() =
-    inherit SerializerBase<Set<'a>>()
+    inherit SerializerBase<'a Set>()
 
-    let serializer = EnumerableInterfaceImplementerSerializer<ResizeArray<'a>>()
-
+    let itemSerializer = lazy (BsonSerializer.SerializerRegistry.GetSerializer<'a>())
     override this.Serialize(context, args, value) =
-        serializer.Serialize(context, args, ResizeArray<'a>(value))
+        serializeSeq context itemSerializer.Value value
 
     override this.Deserialize(context, args) =
-        let res = serializer.Deserialize(context, args)
-        res |> unbox |> Set.ofSeq<'a>
+        deserializeSeq context itemSerializer.Value |> Set.ofSeq
 
 type FSharpTypeSerializationProvider() =
     let createSerializer (objType:Type) =
@@ -322,9 +336,9 @@ module BsonExtensionMethods =
 
     /// Serializes an object to a BSON byte array
     let toBsonArray = MongoDB.Bson.BsonExtensionMethods.ToBson
-
     /// serializes an object to a JSON string
-    let toJson = MongoDB.Bson.BsonExtensionMethods.ToJson
+    let private toJsonSettings = JsonWriterSettings(Indent = true, OutputMode = JsonOutputMode.Shell)
+    let toJson a = MongoDB.Bson.BsonExtensionMethods.ToJson(a, toJsonSettings)
 
     /// Deserializes an object from a `BsonDocument`
     let fromBson (doc: BsonDocument) = BsonSerializer.Deserialize doc
@@ -334,3 +348,7 @@ module BsonExtensionMethods =
 
     /// Deserializes an object from a BSON byte array
     let fromBsonArray (array: byte array) = BsonSerializer.Deserialize array
+
+module Say =
+    let hello name =
+        sprintf "Hello %s" name

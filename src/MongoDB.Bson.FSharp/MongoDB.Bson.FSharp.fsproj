@@ -17,6 +17,10 @@
     <!-- owners is not supported in MSBuild -->
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="TypeShape/TypeShape.fs" />
+    <Compile Include="TypeShape/MiscUtils.fs" />
+    <Compile Include="TypeShape/StagingExtensions.fs" />
+    <Compile Include="TypeShape/MkSerializer.fs" />
     <Compile Include="MongoDB.Bson.FSharp.fs" />
   </ItemGroup>
   <ItemGroup>

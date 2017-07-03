@@ -55,10 +55,13 @@ type TargetFramework =
 | Full of string
 | Core of string
 
-let getTargetFramework (tf: string) =
+let (|StartsWith|_|) prefix (s: string) =
+    if s.StartsWith prefix then Some() else None
+
+let getTargetFramework tf =
     match tf with
-    | ver when ver.StartsWith "netcoreapp" -> Core tf
-    | ver when ver.StartsWith "net4" -> Full tf
+    | StartsWith "net4" -> Full tf
+    | StartsWith "netcoreapp" -> Core tf
     | _ -> failwithf "Unknown TargetFramework %s" tf
 
 let getTargetFrameworksFromProjectFile (projFile : string)=

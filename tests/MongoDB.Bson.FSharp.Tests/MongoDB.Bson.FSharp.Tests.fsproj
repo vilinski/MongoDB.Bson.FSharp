@@ -9,7 +9,6 @@
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
     <ProjectReference Include="../../src/MongoDB.Bson.FSharp/MongoDB.Bson.FSharp.fsproj" />
     <DotNetCliToolReference Include="dotnet-mono" Version="*" />
     <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="1.0.0" />

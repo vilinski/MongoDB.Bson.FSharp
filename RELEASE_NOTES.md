@@ -1,3 +1,7 @@
+#### 0.0.3-beta - 3 Juli 2017
+
+* Support netstandard1.6 and net461 now really :)
+
 #### 0.0.2-beta - 27 Juny 2017
 
 * Support netstandard1.6 and net461

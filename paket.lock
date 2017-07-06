@@ -1,6 +1,6 @@
 NUGET
   remote: https://www.nuget.org/api/v2
-    FSharp.Compiler.Tools (4.1.17) - restriction: || (>= net40) (>= netstandard1.3)
+    FSharp.Compiler.Tools (4.1.21) - restriction: || (>= net40) (>= netstandard1.3)
     FSharp.Core (4.2.1) - redirects: force
       System.Collections (>= 4.0.11) - restriction: >= netstandard1.6
       System.Console (>= 4.0) - restriction: >= netstandard1.6

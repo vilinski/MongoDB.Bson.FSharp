@@ -52,12 +52,13 @@ type TypeShape<'T> () =
     inherit TypeShape()
     static let shapeInfo =
         let t = typeof<'T>
-        if t.GetTypeInfo().IsEnum then
+        let ti = t.GetTypeInfo()
+        if ti.IsEnum then
             Enum(t, Enum.GetUnderlyingType t)
         elif t.IsArray then
             Array(t.GetElementType(), t.GetArrayRank())
-        elif t.GetTypeInfo().IsGenericType then
-            Generic(t.GetGenericTypeDefinition(), t.GetGenericArguments())
+        elif ti.IsGenericType then
+            Generic(t.GetGenericTypeDefinition(), ti.GetGenericArguments())
         else
             Basic t
 
@@ -101,14 +102,19 @@ module private TypeShapeImpl =
                 templateTy.MakeGenericType typeArgs
 
         let ctypes = args |> Array.map (fun o -> o.GetType())
-        let ctor = templateTy.GetConstructor(ctypes)
+        let ctor = templateTy.GetTypeInfo().GetConstructor(ctypes)
         ctor.Invoke args
 
     /// correctly resolves if type is assignable to interface
     let rec isInterfaceAssignableFrom (iface : Type) (ty : Type) =
-        let proj (t : Type) = t.GetTypeInfo().Assembly, t.Namespace, t.Name, t.GetTypeInfo().MetadataToken
+        let proj (t : TypeInfo) =
+            t.Assembly, t.Namespace, t.Name, t.MetadataToken
         if iface = ty then true
-        elif ty.GetInterfaces() |> Array.exists(fun if0 -> proj if0 = proj iface) then true
+        elif
+
+            ty.GetTypeInfo().GetInterfaces()
+            |> Array.map (fun t -> t.GetTypeInfo())
+            |> Array.exists(fun if0 -> proj if0 = proj (iface.GetTypeInfo())) then true
         else
             match ty.GetTypeInfo().BaseType with
             | null -> false
@@ -1094,8 +1100,9 @@ module private ShapeTupleImpl =
         }
 
     let rec mkTupleInfo (t : Type) =
-        let props = t.GetProperties()
-        let fields = t.GetFields(BindingFlags.NonPublic ||| BindingFlags.Instance)
+        let ti = t.GetTypeInfo()
+        let props = ti.GetProperties()
+        let fields = ti.GetFields(BindingFlags.NonPublic ||| BindingFlags.Instance)
         let fs, nested =
             if fields.Length = 8 then
                 let nestedTuple = fields.[7]
@@ -1188,7 +1195,7 @@ type IShapeFSharpRecord =
 and ShapeFSharpRecord<'Record> private () =
     let ctorInfo = FSharpValue.PreComputeRecordConstructorInfo(typeof<'Record>, allMembers)
     let props = FSharpType.GetRecordFields(typeof<'Record>, allMembers)
-    let fields = typeof<'Record>.GetFields(allInstanceMembers)
+    let fields = typeof<'Record>.GetTypeInfo().GetFields(allInstanceMembers)
     let mkRecordField (prop : PropertyInfo) (field : FieldInfo) =
         mkWriteMemberUntyped<'Record> prop.Name prop [|field :> MemberInfo|]
 
@@ -1250,7 +1257,7 @@ type ShapeFSharpUnionCase<'Union> private (uci : UnionCaseInfo) =
         | _ ->
             let underlyingType = properties.[0].DeclaringType
             let fields =
-                underlyingType.GetFields(BindingFlags.NonPublic ||| BindingFlags.Instance)
+                underlyingType.GetTypeInfo().GetFields(BindingFlags.NonPublic ||| BindingFlags.Instance)
                 |> Array.filter (fun f -> f.Name <> "_tag")
 
             let mkField (fieldInfo : FieldInfo) (propertyInfo : PropertyInfo) =
@@ -1364,7 +1371,7 @@ type IShapeCliMutable =
 /// Carries a parameterless constructor and settable properties
 and ShapeCliMutable<'Record> private (defaultCtor : ConstructorInfo) =
     let properties =
-        typeof<'Record>.GetProperties(allInstanceMembers)
+        typeof<'Record>.GetTypeInfo().GetProperties(allInstanceMembers)
         |> Seq.filter (fun p -> p.CanRead && p.CanWrite && p.GetIndexParameters().Length = 0)
         |> Seq.map (fun p -> mkWriteMemberUntyped<'Record> p.Name p [|p|])
         |> Seq.toArray
@@ -1417,18 +1424,18 @@ and ShapePoco<'Poco> private () =
     let isStruct = typeof<'Poco>.GetTypeInfo().IsValueType
 
     let fields =
-        typeof<'Poco>.GetFields(allInstanceMembers)
+        typeof<'Poco>.GetTypeInfo().GetFields(allInstanceMembers)
         |> Array.map (fun f -> mkWriteMemberUntyped<'Poco> f.Name f [|f|])
 
     let ctors =
-        typeof<'Poco>.GetConstructors(allInstanceMembers)
+        typeof<'Poco>.GetTypeInfo().GetConstructors(allInstanceMembers)
         // filter any ctors that accept byrefs or pointers
         |> Seq.filter (fun c -> c.GetParameters() |> Array.exists(fun p -> let t = p.ParameterType in t.IsPointer || t.IsByRef) |> not)
         |> Seq.map (fun c -> mkCtorUntyped<'Poco> c)
         |> Seq.toArray
 
     let properties =
-        typeof<'Poco>.GetProperties(allInstanceMembers)
+        typeof<'Poco>.GetTypeInfo().GetProperties(allInstanceMembers)
         |> Array.map (fun p -> mkMemberUntyped<'Poco> p.Name p [|p|])
 
     /// True iff POCO is a struct
@@ -1667,7 +1674,7 @@ module Shape =
 
     /// Recognizes shapes that carry a parameterless constructor
     let (|DefaultConstructor|_|) (shape : TypeShape) =
-        match shape.Type.GetConstructor([||]) with
+        match shape.Type.GetTypeInfo().GetConstructor([||]) with
         | null -> None
         | _ ->
             Activator.CreateInstanceGeneric<ShapeDefaultConstructor<_>>([|shape.Type|])
@@ -1716,7 +1723,7 @@ module Shape =
 
     /// Recognizes shapes that inherit from System.Delegate
     let (|Delegate|_|) (s : TypeShape) =
-        if typeof<System.Delegate>.IsAssignableFrom s.Type then
+        if typeof<System.Delegate>.GetTypeInfo().IsAssignableFrom s.Type then
             Activator.CreateInstanceGeneric<ShapeDelegate<_>>([|s.Type|])
             :?> IShapeDelegate
             |> Some
@@ -1725,7 +1732,7 @@ module Shape =
 
     /// Recognizes shapes that inherit from System.Exception
     let (|Exception|_|) (s : TypeShape) =
-        if typeof<System.Exception>.IsAssignableFrom s.Type then
+        if typeof<System.Exception>.GetTypeInfo().IsAssignableFrom s.Type then
             let isFSharpExn = FSharpType.IsExceptionRepresentation(s.Type, allMembers)
             Activator.CreateInstanceGeneric<ShapeException<_>>([|s.Type|], [|isFSharpExn|])
             :?> IShapeException
@@ -1943,7 +1950,7 @@ module Shape =
                 |> Some
             | _ -> None
         | iface ->
-            let args = iface.GetGenericArguments()
+            let args = iface.GetTypeInfo().GetGenericArguments()
             Activator.CreateInstanceGeneric<ShapeCollection<_,_>> [|s.Type; args.[0]|]
             :?> IShapeCollection
             |> Some
@@ -1959,7 +1966,7 @@ module Shape =
                 |> Some
             | _ -> None
         | iface ->
-            let args = iface.GetGenericArguments()
+            let args = iface.GetTypeInfo().GetGenericArguments()
             Activator.CreateInstanceGeneric<ShapeEnumerable<_,_>> [|s.Type; args.[0]|]
             :?> IShapeEnumerable
             |> Some
@@ -1994,7 +2001,7 @@ module Shape =
     /// Recognizes shapes that look like C# record classes
     /// They are classes with parameterless constructors and settable properties
     let (|CliMutable|_|) (s : TypeShape) =
-        match s.Type.GetConstructor([||]) with
+        match s.Type.GetTypeInfo().GetConstructor([||]) with
         | null -> None
         | ctor ->
             Activator.CreateInstanceGeneric<ShapeCliMutable<_>>([|s.Type|], [|ctor|])
@@ -2005,7 +2012,7 @@ module Shape =
     let (|Poco|_|) (s : TypeShape) =
         if s.Type.GetTypeInfo().IsClass || s.Type.GetTypeInfo().IsValueType then
             let hasPointers =
-                s.Type.GetFields allInstanceMembers
+                s.Type.GetTypeInfo().GetFields allInstanceMembers
                 |> Seq.map (fun f -> f.FieldType)
                 |> Seq.exists (fun t -> t.IsByRef || t.IsPointer)
 

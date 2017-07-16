@@ -107,7 +107,7 @@ type RecordConvention() =
                 let fields = GetRecordFields objType
                 let names = fields |> Array.map (fun x -> x.Name)
                 let types = fields |> Array.map (fun x -> x.PropertyType)
-                let ctor = objType.GetConstructor(types)
+                let ctor = objType.GetTypeInfo().GetConstructor(types)
                 classMap.MapConstructor(ctor, names) |> ignore
                 fields |> Array.iter (classMap.MapMember >> ignore)
 /// Dictionary representation convention
@@ -281,24 +281,25 @@ type SetSerializer<'a when 'a: comparison>() =
         deserializeSeq context itemSerializer.Value |> Set.ofSeq
 
 type FSharpTypeSerializationProvider() =
-    let createSerializer (objType:Type) =
-        Activator.CreateInstance(objType) :?> IBsonSerializer
+    let createSerializer (t:Type) =
+        Activator.CreateInstance(t) :?> IBsonSerializer
     interface IBsonSerializationProvider with
-        member this.GetSerializer(objType) =
-            if IsOption objType then
-                typedefof<OptionSerializer<_>>.MakeGenericType (objType.GetGenericArguments())
+        member this.GetSerializer(t) =
+            let ti = t.GetTypeInfo()
+            if IsOption t then
+                typedefof<OptionSerializer<_>>.MakeGenericType (ti.GetGenericArguments())
                 |> createSerializer
-            elif IsList objType then
-                typedefof<ListSerializer<_>>.MakeGenericType (objType.GetGenericArguments())
+            elif IsList t then
+                typedefof<ListSerializer<_>>.MakeGenericType (ti.GetGenericArguments())
                 |> createSerializer
-            elif IsMap objType then
-                typedefof<MapSerializer<_,_>>.MakeGenericType(objType.GetGenericArguments())
+            elif IsMap t then
+                typedefof<MapSerializer<_,_>>.MakeGenericType(ti.GetGenericArguments())
                 |> createSerializer
-            elif IsSet objType then
-                typedefof<SetSerializer<_>>.MakeGenericType(objType.GetGenericArguments())
+            elif IsSet t then
+                typedefof<SetSerializer<_>>.MakeGenericType(ti.GetGenericArguments())
                 |> createSerializer
-            elif IsUnion objType then
-                typedefof<DiscriminatedUnionSerializer<_>>.MakeGenericType(objType)
+            elif IsUnion t then
+                typedefof<DiscriminatedUnionSerializer<_>>.MakeGenericType(t)
                 |> createSerializer
             // elif IsRecord objType then
             //     typedefof<RecordSerializer<_>>.MakeGenericType(objType)

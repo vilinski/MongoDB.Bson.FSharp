@@ -9,7 +9,6 @@ open MongoDB.Bson.Serialization
 type 't ToBson = 't -> BsonWriter -> unit
 open System.Reflection
 
-
 let rec mkBsonSerializer<'t>() : 't ToBson =
         let ctx = new RecTypeManager()
         mkBsonSerializerCached<'t> ctx
@@ -161,6 +160,7 @@ type ITypeShapeBasedSerializerProvider() =
     member __.MkBsonSerializer<'t>() = mkBsonSerializer<'t>()
     member __.MkBsonSerializer(ty: System.Type) =
         typeof<ITypeShapeBasedSerializerProvider>
+            .GetTypeInfo()
             .GetMethod("MkBsonSerializer")
             .MakeGenericMethod(ty)
             .Invoke(__, null)

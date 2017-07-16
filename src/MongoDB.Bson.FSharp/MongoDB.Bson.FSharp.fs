@@ -332,23 +332,27 @@ module FSharpSerializer =
 /// functions wrapping the C# extension methods
 [<AutoOpen>]
 module BsonExtensionMethods =
-    /// Serializes an object to a `BsonDocument`
-    let toBson = MongoDB.Bson.BsonExtensionMethods.ToBsonDocument
-
-    /// Serializes an object to a BSON byte array
-    let toBsonArray = MongoDB.Bson.BsonExtensionMethods.ToBson
-    /// serializes an object to a JSON string
-    let private toJsonSettings = JsonWriterSettings(Indent = true, OutputMode = JsonOutputMode.Shell)
-    let toJson a = MongoDB.Bson.BsonExtensionMethods.ToJson(a, toJsonSettings)
 
     /// Deserializes an object from a `BsonDocument`
-    let fromBson (doc: BsonDocument) = BsonSerializer.Deserialize doc
+    let fromBsonDoc (doc: BsonDocument) = BsonSerializer.Deserialize doc
+
+    /// Serializes an object to a `BsonDocument`
+    let toBsonDoc = MongoDB.Bson.BsonExtensionMethods.ToBsonDocument
+
+    /// Deserializes an object from a BSON byte array
+    let fromBsonBin (array: byte array) = BsonSerializer.Deserialize array
+
+    /// Serializes an object to a BSON byte array
+    let toBsonBin = MongoDB.Bson.BsonExtensionMethods.ToBson
+
+    /// serializes an object to a JSON string
+    let toJson a =
+        let toJsonSettings = JsonWriterSettings(Indent = true, OutputMode = JsonOutputMode.Shell)
+        MongoDB.Bson.BsonExtensionMethods.ToJson(a, toJsonSettings)
+
 
     /// Seserializes an object from a JSON string
     let fromJson (json: string) = BsonSerializer.Deserialize json
-
-    /// Deserializes an object from a BSON byte array
-    let fromBsonArray (array: byte array) = BsonSerializer.Deserialize array
 
 module Say =
     let hello name =

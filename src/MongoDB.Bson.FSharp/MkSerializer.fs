@@ -6,29 +6,37 @@ open MongoDB.Bson.IO
 open MongoDB.Bson.Serialization
 
 
-type 't ToBson = 't -> BsonWriter -> unit
+type 't Enc = 't -> BsonWriter -> unit
+type 't Dec = BsonReader -> 't
+type 't EncDec =
+    { enc: 't Enc
+      dec: 't Dec }
+
 open System.Reflection
 
-let rec mkBsonSerializer<'t>() : 't ToBson =
+let noDec: 't Dec = function
+    | _ -> Unchecked.defaultof<'t>
+
+let rec mkBsonSerializer<'t>() : 't Enc =
         let ctx = new RecTypeManager()
         mkBsonSerializerCached<'t> ctx
-and private mkBsonSerializerCached<'t> (ctx: RecTypeManager) : 't ToBson =
-    match ctx.TryFind<'t ToBson>() with
+and private mkBsonSerializerCached<'t> (ctx: RecTypeManager) : 't Enc =
+    match ctx.TryFind<'t Enc>() with
     | Some p -> p
     | None ->
-        ctx.CreateUninitialized<'t ToBson>(fun c t -> c.Value t) |> ignore
+        ctx.CreateUninitialized<'t Enc>(fun c t -> c.Value t) |> ignore
         let p = mkBsonSerializerAux<'t> ctx
         ctx.Complete p
-and private mkBsonSerializerAux<'t>(ctx: RecTypeManager) : 't ToBson =
-    let wrap(p: 'a ToBson) = unbox<'t ToBson> p
+and private mkBsonSerializerAux<'t>(ctx: RecTypeManager) : 't Enc =
+    let wrap(p: 'a Enc) = unbox<'t Enc> p
     let mkFieldSerializer (field: IShapeMember<'DeclaringType>) =
         field.Accept {
-            new IMemberVisitor<'DeclaringType, string * ('DeclaringType ToBson)> with
+            new IMemberVisitor<'DeclaringType, string * ('DeclaringType Enc)> with
                 member __.Visit(field: ShapeMember<'DeclaringType, 'Field>) =
                     let fp = mkBsonSerializerCached<'Field> ctx
                     field.Label, fp << field.Project
         }
-    let writeSeq (tp: 't ToBson) (ts: 't seq) (w: BsonWriter)  =
+    let writeSeq (tp: 't Enc) (ts: 't seq) (w: BsonWriter)  =
         w.WriteStartArray()
         ts |> Seq.iter (fun t -> tp t w)
         w.WriteEndArray()
@@ -38,7 +46,7 @@ and private mkBsonSerializerAux<'t>(ctx: RecTypeManager) : 't ToBson =
     | Shape.Int32 -> wrap(fun v w -> w.WriteInt32 v)
     | Shape.FSharpOption s ->
         s.Accept {
-            new IFSharpOptionVisitor<'t ToBson> with
+            new IFSharpOptionVisitor<'t Enc> with
                 member __.Visit<'a>() = // 't = 'a option
                     let tp = mkBsonSerializerCached<'a> ctx
                     wrap(fun v w ->
@@ -49,28 +57,28 @@ and private mkBsonSerializerAux<'t>(ctx: RecTypeManager) : 't ToBson =
         }
     | Shape.FSharpList s ->
         s.Accept {
-            new IFSharpListVisitor<'t ToBson> with
+            new IFSharpListVisitor<'t Enc> with
                 member __.Visit<'t>() =
                     let tp = mkBsonSerializerCached<'a> ctx
                     wrap(fun ts w -> writeSeq tp ts w)
         }
     // | Shape.Array s ->
     //     s.Accept {
-    //         new IArrayVisitor<'t ToBson> with
+    //         new IArrayVisitor<'t Enc> with
     //             member __.Visit<'a> rank =
     //                 let tp = mkBsonSerializerCached<'a> ctx
     //                 wrap(fun ts w -> writeSeq tp ts w)
     //     }
     | Shape.FSharpSet s ->
         s.Accept {
-            new IFSharpSetVisitor<'t ToBson> with
+            new IFSharpSetVisitor<'t Enc> with
                 member __.Visit<'t when 't : comparison>() =
                     let tp = mkBsonSerializerCached<'a> ctx
                     wrap(fun ts w -> writeSeq tp ts w)
         }
     | Shape.FSharpMap s ->
         s.Accept {
-            new IFSharpMapVisitor<'t ToBson> with
+            new IFSharpMapVisitor<'t Enc> with
                 member __.Visit<'k, 'v when 'k : comparison>() =
                     let kp = mkBsonSerializerCached<'k> ctx
                     let vp = mkBsonSerializerCached<'v> ctx
@@ -166,7 +174,7 @@ type ITypeShapeBasedSerializerProvider() =
             .Invoke(__, null)
     // interface MongoDB.Bson.Serialization.IBsonSerializationProvider with
     //     member __.GetSerializer (ty: System.Type) =
-    //         let serialize: 't ToBson = __.MkBsonSerializer ty :> (:t ToBson)
+    //         let serialize: 't Enc = __.MkBsonSerializer ty :> (:t Enc)
     //         { new IBsonSerializer with
     //             member x.Serialize(ctx, args, value) =
     //                 serialize ctx.Writer args value

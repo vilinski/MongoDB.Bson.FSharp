@@ -12,13 +12,33 @@ open Expecto
 // register F# serializers
 do FSharpSerializer.Register()
 
+let hexDump lineLength (b: byte array) =
+    b
+    |> Array.chunkBySize lineLength
+    |> Array.map (fun bytes ->
+        let pad =
+            String.replicate (lineLength - Array.length bytes) "   "
+        let hex =
+            bytes
+            |> Array.map (fun (x : byte) -> System.String.Format("{0:X2}", x))
+            |> String.concat " "
+        let str =
+            bytes
+            |> System.Text.Encoding.UTF8.GetString
+            |> Seq.map (fun c -> if System.Char.IsLetterOrDigit c then c else '.')
+            |> Seq.toArray
+            |> System.String
+            |> sprintf "%s"
+        hex + pad + " | " + str)
+    |> String.concat System.Environment.NewLine
+
 let testDefaultBsonDocument() =
     let d = testItems |> toBsonDoc
     d.ToString() |> printfn "%s"
     Expect.equal (d |> fromBsonDoc) testItems "test items document serializing"
 let testDefaultBsonBinary() =
     let b = testItems |> toBsonBin
-    b |> printfn "%A"
+    b |> hexDump 32 |> printfn "%A"
     Expect.equal (b |> fromBsonBin) testItems "test items binary serializing"
 let testDefaultBsonJson() =
     let j = testItems |> toJson

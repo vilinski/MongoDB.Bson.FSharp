@@ -7,11 +7,17 @@ open MongoDB.Bson.IO
 open MongoDB.Bson.Serialization
 
 
-type 't Enc = 't -> BsonWriter -> unit
-type 't Dec = BsonReader -> 't
+type 't Enc = IBsonWriter -> 't -> unit
+type 't Dec = IBsonReader -> 't
 type 't EncDec =
     { enc: 't Enc
       dec: 't Dec }
+
+type 't FieldEncDec =
+    { memberName: string
+      memberEnc: IBsonWriter -> 't -> unit
+      memberDec: IBsonReader -> 't -> 't }
+
 
 open System.Reflection
 
@@ -29,30 +35,52 @@ and private mkBsonSerializerCached<'t> (ctx: RecTypeManager) : 't EncDec =
         let p = mkBsonSerializerAux<'t> ctx
         ctx.Complete p
 and private mkBsonSerializerAux<'t>(ctx: RecTypeManager) : 't EncDec =
-    let wrap (enc: 'a Enc) (dec: 'a Dec) =
+    let codec (enc: 'a Enc) (dec: 'a Dec) =
         { enc = enc; dec = dec } |> unbox<'t EncDec>
-    let mkFieldSerializer (field: IShapeMember<'DeclaringType>) =
+    let mkMemberSerializer (field: IShapeWriteMember<'DeclaringType>) =
         field.Accept {
-            new IMemberVisitor<'DeclaringType, string * ('DeclaringType EncDec)> with
-                member __.Visit(field: ShapeMember<'DeclaringType, 'Field>) =
+            new IWriteMemberVisitor<'DeclaringType, 'DeclaringType FieldEncDec> with
+                member __.Visit(shape: ShapeWriteMember<'DeclaringType, 'Field>) =
                     let p = mkBsonSerializerCached<'Field> ctx
-                    let enc = p.enc << field.Project
-                    let dec = noDec
-                    field.Label, wrap enc dec
+                    let enc (w: IBsonWriter) c =
+                        let m = shape.Project c
+                        p.enc w m
+                    let dec (r: IBsonReader) c =
+                        let m = p.dec r
+                        shape.Inject c m
+                    { memberName = field.Label
+                      memberEnc = enc
+                      memberDec = dec }
         }
-    // let mkFieldDeserializer(field: IShapeWriteMember<'DeclaringType>) =
-    //     field.Accept {
-    //         new IWriteMemberVisitor<'DeclaringType, string * ('DeclaringType Dec)> with
-    //             member __.Visit (shape : ShapeWriteMember<'DeclaringType, 'Field>) =
-    //                 let rf = mkBsonSerializer<'Field>()
-    //                 shape.Inject dt f
-    //                 //gen { let! f = rf in return fun dt -> shape.Inject dt f } }
-    //     }
-    let writeSeq (tp: 't Enc) (ts: 't seq) (w: BsonWriter) =
+    let readIgnore r =
+        // TODO read and throwaway the value
+        ()
+    let combineMemberSerializers (init: unit -> 'a) (members: 'a FieldEncDec []) =
+        let decs = members |> Array.map(fun m -> m.memberName, m.memberDec) |> Map.ofArray
+        let encs = members |> Array.map(fun m -> m.memberName, m.memberEnc)
+        let enc (w: IBsonWriter) (c: 'a) =
+            w.WriteStartDocument()
+            for (name,enc) in encs do
+                w.WriteName(name)
+                enc w c
+            w.WriteEndDocument()
+        let dec (r: IBsonReader) =
+            let mutable c = init()
+            r.ReadStartDocument()
+            while(r.ReadBsonType() <> BsonType.EndOfDocument) do
+                let name = r.ReadName()
+                match decs |> Map.tryFind name with
+                | None -> readIgnore r
+                | Some dec ->
+                    c <- dec r c
+            r.ReadEndDocument()
+            c
+        { enc = enc; dec = dec }
+    let writeSeq (tp: 't Enc) (w: IBsonWriter) (ts: 't seq) =
         w.WriteStartArray()
-        ts |> Seq.iter (fun t -> tp t w)
+        ts |> Seq.iter (fun t -> tp w t)
         w.WriteEndArray()
-    let readSeq (tp: 't Dec) (r: BsonReader) =
+    let readSeq (tp: 't Dec) (r: IBsonReader) =
         seq {
             do r.ReadStartArray()
             while r.ReadBsonType() <> BsonType.EndOfDocument do
@@ -60,50 +88,56 @@ and private mkBsonSerializerAux<'t>(ctx: RecTypeManager) : 't EncDec =
             do r.ReadEndArray()
         }
 
-    match shapeof<'t> with
+    let shape = shapeof<'t>
+    printfn "shapeof<'t> is %A" shape
+    match shape with
     | Shape.Unit ->
-        wrap (fun () w -> w.WriteNull())
-             (fun r -> r.ReadNull())
+        codec (fun w () -> w.WriteNull())
+              (fun r -> r.ReadNull())
     | Shape.Bool ->
-        wrap (fun v w -> w.WriteBoolean v)
-             (fun r -> r.ReadBoolean())
+        codec (fun w v -> w.WriteBoolean v)
+              (fun r -> r.ReadBoolean())
     | Shape.Int32 ->
-        wrap (fun v w -> w.WriteInt32 v)
-             (fun r -> r.ReadInt32())
+        codec (fun w v -> w.WriteInt32 v)
+              (fun r -> r.ReadInt32())
     | Shape.FSharpOption s ->
         s.Accept {
             new IFSharpOptionVisitor<'t EncDec> with
                 member __.Visit<'a>() = // 't = 'a option
                     let tp = mkBsonSerializerCached<'a> ctx
-                    wrap (fun v w ->
+                    codec (fun w v ->
                             match v with
                             | None -> w.WriteNull()
-                            | Some t -> tp.enc t w)
-                         noDec
+                            | Some t -> tp.enc w t)
+                          (fun r ->
+                            if r.ReadBsonType() = BsonType.Null then None
+                            else
+                                tp.dec r |> Some
+                          )
         }
     | Shape.FSharpList s ->
         s.Accept {
             new IFSharpListVisitor<'t EncDec> with
                 member __.Visit<'t>() =
                     let tp = mkBsonSerializerCached<'a> ctx
-                    wrap (fun (ts: 'a list) w -> writeSeq tp.enc ts w)
-                         (fun r -> readSeq tp.dec r |> Seq.toList)
+                    codec (fun w (ts: 'a list) -> writeSeq tp.enc w ts)
+                          (fun r -> readSeq tp.dec r |> List.ofSeq)
         }
     | Shape.Array s ->
         s.Accept {
             new IArrayVisitor<'t EncDec> with
                 member __.Visit<'t> rank =
                     let tp = mkBsonSerializerCached<'a> ctx
-                    wrap (fun (ts: 'a array) w -> writeSeq tp.enc ts w)
-                         (fun r -> readSeq tp.dec r |> Seq.toArray)
+                    codec (fun w (ts: 'a array) -> writeSeq tp.enc w ts)
+                          (fun r -> readSeq tp.dec r |> Array.ofSeq)
         }
     // | Shape.FSharpSet s ->
     //     s.Accept {
     //         new IFSharpSetVisitor<'t EncDec> with
     //             member __.Visit<'t when 't : comparison>() =
     //                 let tp = mkBsonSerializerCached<'a> ctx
-    //                 wrap (fun (ts: 'a Set) w -> writeSeq tp.enc ts w)
-    //                      (fun r -> readSeq tp.dec r |> Set.ofSeq)
+    //                 codec (fun w (ts: 'a Set) -> writeSeq tp.enc w ts)
+    //                       (fun r -> readSeq tp.dec r |> Set.ofSeq)
     //     }
     | Shape.FSharpMap s ->
         s.Accept {
@@ -112,96 +146,79 @@ and private mkBsonSerializerAux<'t>(ctx: RecTypeManager) : 't EncDec =
                     let kp = mkBsonSerializerCached<'k> ctx
                     let vp = mkBsonSerializerCached<'v> ctx
                     if typeof<'k> <> typeof<string> then // document
-                        wrap (fun m w ->
-                              w.WriteStartDocument()
-                              m |> Map.iter(fun k v -> w.WriteName k; vp.enc v w )
-                              w.WriteEndDocument())
-                             noDec
+                        codec (fun w m ->
+                                 w.WriteStartDocument()
+                                 m |> Map.iter(fun k v -> w.WriteName k; vp.enc w v )
+                                 w.WriteEndDocument())
+                              noDec
 
                     else // array of documents with k,v fields
-                        wrap (fun m w ->
+                        codec (fun w m ->
                                 w.WriteStartArray()
                                 let mutable i = 0
                                 for KeyValue(k,v) in m do
                                     i <- i + 1
                                     i |> string |> w.WriteStartDocument
                                     w.WriteName "k"
-                                    kp.enc k w
+                                    kp.enc w k
                                     w.WriteName "v"
-                                    vp.enc v w
+                                    vp.enc w v
                                     w.WriteEndDocument()
                                     ()
                                 w.WriteEndArray())
                              noDec
-
         }
     | Shape.Tuple (:? ShapeTuple<'t> as shape) ->
-        let elemSerializers = shape.Elements |> Array.map mkFieldSerializer
-        wrap
-            (fun (t:'t) w ->
+        let elemSerializers = shape.Elements |> Array.map mkMemberSerializer
+        codec
+            (fun w (t:'t) ->
                 w.WriteStartArray()
                 elemSerializers
-                |> Seq.iter (fun (_,ep) -> ep.enc t w)
+                |> Seq.iter (fun ep -> ep.memberEnc w t)
                 w.WriteEndArray())
             noDec
 
     | Shape.FSharpRecord (:? ShapeFSharpRecord<'t> as shape) ->
-        let fieldSerializers = shape.Fields |> Array.map mkFieldSerializer
-        let dec (r: BsonReader) =
-            let mutable target = shape.CreateUninitialized()
-            for (lbl,ep) in fieldSerializers do
-                let name = r.ReadName()
-                let value = ep.dec r
-                // TODO set record fields
-                ()//target <- u target
-            target
-        wrap
-            (fun (r:'t) w ->
-                w.WriteStartDocument()
-                fieldSerializers
-                |> Seq.iter (fun (label, ep) ->
-                    w.WriteName(label)
-                    ep.enc r w)
-                w.WriteEndDocument())
-            dec
+        shape.Fields
+        |> Array.map mkMemberSerializer
+        |> combineMemberSerializers (fun () -> shape.CreateUninitialized())
 
-    | Shape.FSharpUnion (:? ShapeFSharpUnion<'t> as shape) ->
-        let mkUnionCaseSerializer (s : ShapeFSharpUnionCase<'t>) =
-            let fieldSerializers = s.Fields |> Array.map mkFieldSerializer
-            fun (u:'t) (w: BsonWriter) ->
-                w.WriteStartArray()
-                w.WriteString("1", s.CaseInfo.Name)
+    // | Shape.FSharpUnion (:? ShapeFSharpUnion<'t> as shape) ->
+    //     let mkUnionCaseSerializer (s : ShapeFSharpUnionCase<'t>) =
+    //         let fieldSerializers = s.Fields |> Array.map mkMemberSerializer
+    //         fun (u:'t) (w: IBsonWriter) ->
+    //             w.WriteStartArray()
+    //             w.WriteString("1", s.CaseInfo.Name)
 
-                match fieldSerializers with
-                | [||] -> ()
-                | [|_,fp|] ->
-                    w.WriteName "2"
-                    fp.enc u w
-                | fps ->
-                    fps
-                    |> Seq.iteri (fun i (_,fp) ->
-                        i + 2 |> sprintf "%i" |> w.WriteName
-                        fp.enc u w)
-                w.WriteEndArray()
+    //             match fieldSerializers with
+    //             | [||] -> ()
+    //             | [|fp|] ->
+    //                 w.WriteName "2"
+    //                 fp.memberEnc w u
+    //             | fps ->
+    //                 fps
+    //                 |> Seq.iteri (fun i fp ->
+    //                     i + 2 |> sprintf "%i" |> w.WriteName
+    //                     fp.memberEnc w u)
+    //             w.WriteEndArray()
+    //     let caseSerializers = shape.UnionCases |> Array.map mkUnionCaseSerializer
+    //     codec
+    //         (fun w (u:'t) ->
+    //             let enc = caseSerializers.[shape.GetTag u]
+    //             enc w u)
+    //         noDec
 
-        let caseSerializers = shape.UnionCases |> Array.map mkUnionCaseSerializer
-        wrap
-            (fun (u:'t) ->
-                let printer = caseSerializers.[shape.GetTag u]
-                printer u)
-            noDec
-
-    | Shape.Poco (:? ShapePoco<'t> as shape) ->
-        let propSerializers = shape.Properties |> Array.map mkFieldSerializer
-        wrap
-            (fun (r:'t) w ->
-                w.WriteStartDocument()
-                propSerializers
-                |> Seq.iter (fun (label, ep) ->
-                    w.WriteName label
-                    ep.enc r w)
-                w.WriteEndDocument())
-            noDec
+    // | Shape.Poco (:? ShapePoco<'t> as shape) ->
+    //     let propSerializers = shape.Properties |> Array.map mkMemberSerializer
+    //     codec
+    //         (fun w (r:'t) ->
+    //             w.WriteStartDocument()
+    //             propSerializers
+    //             |> Seq.iter (fun (label, ep) ->
+    //                 w.WriteName label
+    //                 ep.enc w r)
+    //             w.WriteEndDocument())
+    //         noDec
     | _ -> failwithf "unsupported type '%O'" typeof<'t>
 
 
@@ -218,10 +235,10 @@ type ITypeShapeBasedSerializerProvider() =
             .Invoke(__, null)
     // interface MongoDB.Bson.Serialization.IBsonSerializationProvider with
     //     member __.GetSerializer (ty: System.Type) =
-    //         let serialize: 't Enc = __.MkBsonSerializer ty :> (:t Enc)
+    //         let enc: 't Enc = __.MkBsonSerializer ty :> (:t Enc)
     //         { new IBsonSerializer with
     //             member x.Serialize(ctx, args, value) =
-    //                 serialize ctx.Writer args value
+    //                 enc ctx.Writer value
     //             member x.Deserialize (ctx, args) = null
     //             member x.ValueType = ty
     //         }

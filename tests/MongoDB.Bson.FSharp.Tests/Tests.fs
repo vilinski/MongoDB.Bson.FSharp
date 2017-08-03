@@ -48,35 +48,35 @@ let testDefaultBsonJson() =
 let toBsonDocument (t: 't) =
     let s = mkBsonSerializer<'t>()
     let mutable d = BsonDocument()
-    use w = new BsonDocumentWriter(d, BsonDocumentWriterSettings.Defaults) :> BsonWriter
-    let wr = s.enc t w
+    use w = new BsonDocumentWriter(d, BsonDocumentWriterSettings.Defaults) :> IBsonWriter
+    let wr = s.enc w t
     d
 let fromBsonDocument<'t>(d: BsonDocument) =
     let s = mkBsonSerializer<'t>()
-    use r = new BsonDocumentReader(d) :> BsonReader
+    use r = new BsonDocumentReader(d) :> IBsonReader
     s.dec r
 
 let toBsonBinary (t: 't) =
     let s = mkBsonSerializer<'t>()
     use stream = new System.IO.MemoryStream()
-    use w = new BsonBinaryWriter(stream, BsonBinaryWriterSettings.Defaults) :> BsonWriter
-    let wr = s.enc t w
+    use w = new BsonBinaryWriter(stream, BsonBinaryWriterSettings.Defaults) :> IBsonWriter
+    let wr = s.enc w t
     stream.ToArray()
 let fromBsonBinary<'t>(a: byte array) =
     let s = mkBsonSerializer<'t>()
     use stream = new MemoryStream(a)
-    use r = new BsonBinaryReader(stream) :> BsonReader
+    use r = new BsonBinaryReader(stream) :> IBsonReader
     s.dec r
 
 let toBsonJson(t: 't) =
     let s = mkBsonSerializer<'t>()
     use sw = new StringWriter()
-    use w = new JsonWriter(sw) :> BsonWriter
-    let wr = s.enc t w
+    use w = new JsonWriter(sw) :> IBsonWriter
+    let wr = s.enc w t
     sw.ToString()
 let fromBsonJson(j: string) =
     let s = mkBsonSerializer<'t>()
-    use r = new JsonReader(j) :> BsonReader
+    use r = new JsonReader(j) :> IBsonReader
     s.dec r
 
 let testBinary (t: 't) =

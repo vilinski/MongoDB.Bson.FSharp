@@ -1,10 +1,11 @@
 // Learn more about F# at http://fsharp.org. See the 'F# Tutorial' project
 // for more guidance on F# programming.
 
-#I "bin/Release/net45"
+#I "bin/Release/net461"
 #r "FSharp.Core.dll"
 #r "MongoDB.Bson.dll"
 #r "MongoDB.Bson.FSharp.dll"
+open MongoDB.Bson.IO
 open MongoDB.Bson.FSharp
 open MkSerializer
 
@@ -25,16 +26,14 @@ let me =
     }
 
 let intSer = mkBsonSerializer<int>()
+let personSer = mkBsonSerializer<Person>()
 let i = 32
 
 let testRound a =
     let s = mkBsonSerializer<_>()
     use stream = new System.IO.MemoryStream()
-    use w = new MongoDB.Bson.IO.BsonBinaryWriter(stream, BsonBinaryWriterSettings.Defaults)
-    let wr = w.Write
-    let d = s.enc
-    ()
-let ei = intSer.enc i r
+    use w = new MongoDB.Bson.IO.BsonBinaryWriter(stream, BsonBinaryWriterSettings.Defaults) :> IBsonWriter
+    s.enc w a
 let serializer = MkSerializer.mkBsonSerializer<Person>()
 let test() =
     FSharpSerializer.Register()

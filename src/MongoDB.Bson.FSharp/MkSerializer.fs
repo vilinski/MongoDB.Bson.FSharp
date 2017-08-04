@@ -76,11 +76,11 @@ and private mkBsonSerializerAux<'t>(ctx: RecTypeManager) : 't EncDec =
             r.ReadEndDocument()
             c
         { enc = enc; dec = dec }
-    let writeSeq (tp: 't Enc) (w: IBsonWriter) (ts: 't seq) =
+    let writeSeq (tp: 'a Enc) (w: IBsonWriter) (ts: 'a seq) =
         w.WriteStartArray()
         ts |> Seq.iter (fun t -> tp w t)
         w.WriteEndArray()
-    let readSeq (tp: 't Dec) (r: IBsonReader) =
+    let readSeq (tp: 'a Dec) (r: IBsonReader) =
         seq {
             do r.ReadStartArray()
             while r.ReadBsonType() <> BsonType.EndOfDocument do
@@ -119,16 +119,16 @@ and private mkBsonSerializerAux<'t>(ctx: RecTypeManager) : 't EncDec =
         s.Accept {
             new IFSharpListVisitor<'t EncDec> with
                 member __.Visit<'t>() =
-                    let tp = mkBsonSerializerCached<'a> ctx
-                    codec (fun w (ts: 'a list) -> writeSeq tp.enc w ts)
+                    let tp = mkBsonSerializerCached<'t> ctx
+                    codec (fun w (ts: 't list) -> writeSeq tp.enc w ts)
                           (fun r -> readSeq tp.dec r |> List.ofSeq)
         }
     | Shape.Array s ->
         s.Accept {
             new IArrayVisitor<'t EncDec> with
                 member __.Visit<'t> rank =
-                    let tp = mkBsonSerializerCached<'a> ctx
-                    codec (fun w (ts: 'a array) -> writeSeq tp.enc w ts)
+                    let tp = mkBsonSerializerCached<'t> ctx
+                    codec (fun w (ts: 't array) -> writeSeq tp.enc w ts)
                           (fun r -> readSeq tp.dec r |> Array.ofSeq)
         }
     // | Shape.FSharpSet s ->
@@ -221,24 +221,27 @@ and private mkBsonSerializerAux<'t>(ctx: RecTypeManager) : 't EncDec =
     //         noDec
     | _ -> failwithf "unsupported type '%O'" typeof<'t>
 
-
-type ITypeShapeBasedSerializerProvider() =
-    // { new MongoDB.Bson.Serialization.IBsonSerializationProvider with
-    //     member __.GetSerializer(type:Type): IBsonSerializer = null
-    // }
-    member __.MkBsonSerializer<'t>() = mkBsonSerializer<'t>()
-    member __.MkBsonSerializer(ty: System.Type) =
-        typeof<ITypeShapeBasedSerializerProvider>
+type TypeShapeSerializer<'t>() =
+    let codec = mkBsonSerializer<'t>()
+    interface IBsonSerializer<'t> with
+        member x.Serialize(context: BsonSerializationContext, args: BsonSerializationArgs, value: 't): unit =
+            codec.enc context.Writer value
+        member x.Serialize(context: BsonSerializationContext, args: BsonSerializationArgs, value: obj): unit =
+            value |> unbox |> codec.enc context.Writer
+        member x.Deserialize (context: BsonDeserializationContext, args: BsonDeserializationArgs): 't =
+            codec.dec context.Reader
+        member x.Deserialize (context: BsonDeserializationContext, args: BsonDeserializationArgs): obj =
+            codec.dec context.Reader |> box
+        member x.ValueType = typedefof<'t>
+type TypeShapeSerializerProvider() =
+    member __.MkBsonSerializer<'t>() = TypeShapeSerializer<'t>()
+    member __.MkBsonSerializer(ty: System.Type): IBsonSerializer =
+        typedefof<TypeShapeSerializerProvider>
             .GetTypeInfo()
             .GetMethod("MkBsonSerializer")
             .MakeGenericMethod(ty)
             .Invoke(__, null)
-    // interface MongoDB.Bson.Serialization.IBsonSerializationProvider with
-    //     member __.GetSerializer (ty: System.Type) =
-    //         let enc: 't Enc = __.MkBsonSerializer ty :> (:t Enc)
-    //         { new IBsonSerializer with
-    //             member x.Serialize(ctx, args, value) =
-    //                 enc ctx.Writer value
-    //             member x.Deserialize (ctx, args) = null
-    //             member x.ValueType = ty
-    //         }
+            |> unbox
+    interface MongoDB.Bson.Serialization.IBsonSerializationProvider with
+        member __.GetSerializer (ty: System.Type) =
+            __.MkBsonSerializer ty

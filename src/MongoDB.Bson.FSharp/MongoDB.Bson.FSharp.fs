@@ -353,7 +353,3 @@ module BsonExtensionMethods =
 
     /// Seserializes an object from a JSON string
     let fromJson (json: string) = BsonSerializer.Deserialize json
-
-module Say =
-    let hello name =
-        sprintf "Hello %s" name

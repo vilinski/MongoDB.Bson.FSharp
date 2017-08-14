@@ -108,11 +108,6 @@ let testBsonJson() =
 [<Tests>]
 let tests =
   testList "all" [
-    testList "samples" [
-      testCase "Say hello all" <| fun _ ->
-        let subject = Say.hello "all"
-        Expect.equal subject "Hello all" "You didn't say hello"
-    ]
     testList "bson" [
         testList "default" [
             testCase "from/to BsonDocument" testDefaultBsonDocument

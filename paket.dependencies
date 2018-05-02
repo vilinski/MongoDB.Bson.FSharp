@@ -1,15 +1,9 @@
 source https://nuget.org/api/v2
 
-nuget FSharp.NET.Sdk
-nuget FSharp.Core redirects: force
+storage: none
 nuget MongoDB.Bson
+nuget Expecto
 
 group Build
-source https://nuget.org/api/v2
-nuget FAKE
-
-group Test
-source https://nuget.org/api/v2
-
-nuget FSharp.Core redirects: force
-nuget Expecto
+    source https://nuget.org/api/v2
+    nuget FAKE

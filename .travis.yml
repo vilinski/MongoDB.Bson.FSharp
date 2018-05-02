@@ -2,12 +2,14 @@ language: csharp
 sudo: required
 dist: trusty
 
-dotnet: 1.0.1
-mono:
-  - 4.6.1
-  - 4.8.1
-  - latest # => "stable release"
-  # - weekly # => "latest commits"
+dotnet:
+  - 2.1.105
+  - latest
+# mono:
+#   - 4.6.1
+#   - 4.8.1
+#   - latest # => "stable release"
+#   # - weekly # => "latest commits"
 os:
   - linux
   - osx

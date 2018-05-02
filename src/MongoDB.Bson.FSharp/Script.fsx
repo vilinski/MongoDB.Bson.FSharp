@@ -1,7 +1,7 @@
 // Learn more about F# at http://fsharp.org. See the 'F# Tutorial' project
 // for more guidance on F# programming.
 
-#r "bin/Debug/MongoDB.Bson.FSharp.dll"
+#r "bin/Debug/netstandard2.0/MongoDB.Bson.FSharp.dll"
 #r "../../packages/MongoDB.Bson/lib/net45/MongoDB.Bson.dll"
 open MongoDB.Bson.FSharp
 

@@ -1,135 +1,124 @@
-#r @"packages/build/FAKE/tools/FakeLib.dll"
+// --------------------------------------------------------------------------------------
+// FAKE build script
+// --------------------------------------------------------------------------------------
+
+#r "./packages/build/FAKE/tools/FakeLib.dll"
+
+open System
 open Fake
 open Fake.Git
-open Fake.AssemblyInfoFile
 open Fake.ReleaseNotesHelper
-open Fake.UserInputHelper
-open System
 
-let releaseNotes = LoadReleaseNotes "RELEASE_NOTES.md"
-let srcGlob = "src/**/*.fsproj"
-let testsGlob = "tests/**/*.fsproj"
+// --------------------------------------------------------------------------------------
+// Build variables
+// --------------------------------------------------------------------------------------
+
+let appReferences = !! "/**/*.??proj"
+let dotnetcliVersion = "2.1.105"
+let mutable dotnetExePath = "dotnet"
+
+// --------------------------------------------------------------------------------------
+// Helpers
+// --------------------------------------------------------------------------------------
+
+let run timeout cmd args dir =
+    //let timeout = TimeSpan.FromMinutes 1.
+    if execProcess (fun info ->
+        info.FileName <- cmd
+        info.Arguments <- args
+        if not (String.IsNullOrWhiteSpace dir) then
+            info.WorkingDirectory <- dir
+    ) timeout |> not then
+        failwithf "Error while running '%s' with args: %s" cmd args
+
+let runDotnet workingDir args =
+    let result =
+        ExecProcess (fun info ->
+            info.FileName <- dotnetExePath
+            if not (String.IsNullOrWhiteSpace workingDir) then
+                info.WorkingDirectory <- workingDir
+            info.Arguments <- args) TimeSpan.MaxValue
+    if result <> 0 then failwithf "dotnet %s failed" args
+
+
+let pkill args =
+    run TimeSpan.MaxValue "pkill" args ""
+
+let killParentsAndChildren processId =
+    sprintf "-P %d" processId |> pkill
+
+// --------------------------------------------------------------------------------------
+// Targets
+// --------------------------------------------------------------------------------------
 
 Target "Clean" (fun _ ->
-    ["bin"; "temp" ;"dist"]
-    |> CleanDirs
+    ["bin"; "obj"; "temp" ;"dist"]
+    |> DeleteDirs
 
-    !! srcGlob
-    ++ testsGlob
+    appReferences
     |> Seq.collect(fun p ->
         ["bin";"obj"]
         |> Seq.map(fun sp ->
-             IO.Path.GetDirectoryName p @@ sp)
+             IO.Path.GetDirectoryName p </> sp)
         )
     |> CleanDirs
-
     )
 
-Target "DotnetRestore" (fun _ ->
-    !! srcGlob
-    ++ testsGlob
-    |> Seq.iter (fun proj ->
-        DotNetCli.Restore (fun c ->
-            { c with
-                Project = proj
-                //This makes sure that Proj2 references the correct version of Proj1
-                AdditionalArgs = [sprintf "/p:PackageVersion=%s" releaseNotes.NugetVersion]
-            })
-))
+Target "InstallDotNetCLI" (fun _ ->
+    dotnetExePath <- DotNetCli.InstallDotNetSDK dotnetcliVersion
+    )
 
-Target "DotnetBuild" (fun _ ->
-    !! srcGlob
-    |> Seq.iter (fun proj ->
-        DotNetCli.Build (fun c ->
-            { c with
-                Project = proj
-                //This makes sure that Proj2 references the correct version of Proj1
-                AdditionalArgs = [sprintf "/p:PackageVersion=%s" releaseNotes.NugetVersion]
-            })
-))
+Target "Restore" (fun _ ->
+    runDotnet "." "restore"
+    // appReferences
+    // |> Seq.iter (fun p ->
+    //     let dir = System.IO.Path.GetDirectoryName p
+    //     runDotnet dir "restore"
+    // )
+    )
+
+Target "Build" (fun _ ->
+    runDotnet "" "build"
+    // appReferences
+    // |> Seq.iter (fun p ->
+    //     let dir = System.IO.Path.GetDirectoryName p
+    //     runDotnet dir "build"
+    // )
+    )
+
 
 let invoke f = f ()
 let invokeAsync f = async { f () }
 
-type TargetFramework =
-| Full of string
-| Core of string
-
-let (|StartsWith|_|) prefix (s: string) =
-    if s.StartsWith prefix then Some() else None
-
-let getTargetFramework tf =
-    match tf with
-    | StartsWith "net4" -> Full tf
-    | StartsWith "netcoreapp" -> Core tf
-    | _ -> failwithf "Unknown TargetFramework %s" tf
-
-let getTargetFrameworksFromProjectFile (projFile : string)=
-    let doc = Xml.XmlDocument()
-    doc.Load(projFile)
-    doc.GetElementsByTagName("TargetFrameworks").[0].InnerText.Split(';')
-    |> Seq.map getTargetFramework
-    |> Seq.toList
-
-let selectRunnerForFramework tf =
-    let runMono = sprintf "mono -f %s --restore -c Release"
-    let runCore = sprintf "run -f %s -c Release"
-    match tf with
-    | Full t when isMono-> runMono t
-    | Full t -> runCore t
-    | Core t -> runCore t
-
-
-let runTests modifyArgs =
-    !! testsGlob
-    |> Seq.map(fun proj -> proj, getTargetFrameworksFromProjectFile proj)
-    |> Seq.collect(fun (proj, targetFrameworks) ->
-        targetFrameworks
-        |> Seq.map selectRunnerForFramework
-        |> Seq.map(fun args -> fun () ->
-            DotNetCli.RunCommand (fun c ->
-            { c with
-                WorkingDir = IO.Path.GetDirectoryName proj
-            }) (modifyArgs args))
-    )
-
-
-Target "DotnetTest" (fun _ ->
-    runTests id
-    |> Seq.iter (invoke)
-)
-let execProcAndReturnMessages filename args =
-    let args' = args |> String.concat " "
-    ProcessHelper.ExecProcessAndReturnMessages
-                (fun psi ->
-                    psi.FileName <- filename
-                    psi.Arguments <-args'
-                ) (TimeSpan.FromMinutes(1.))
-
-let pkill args =
-    execProcAndReturnMessages "pkill" args
-
-let killParentsAndChildren processId =
-    pkill [sprintf "-P %d" processId]
-
-
-Target "WatchTests" (fun _ ->
-    runTests (sprintf "watch %s")
-    |> Seq.iter (invokeAsync >> Async.Catch >> Async.Ignore >> Async.Start)
-
-    printfn "Press enter to stop..."
-    Console.ReadLine() |> ignore
-
-    if isWindows |> not then
-        startedProcesses
-        |> Seq.iter(fst >> killParentsAndChildren >> ignore )
-    else
-        //Hope windows handles this right?
-        ()
+Target "Test" (fun _ ->
+    !! "**/*.Tests.??proj"
+    |> Seq.map System.IO.Path.GetDirectoryName
+    |> Seq.iter (fun dir ->
+        runDotnet dir "run --framework netcoreapp2.0" // why cli asks for framework?
+        )
+    // runTests id
+    // |> Seq.iter (invoke)
 )
 
-Target "DotnetPack" (fun _ ->
-    !! srcGlob
+// Target "WatchTests" (fun _ ->
+//     runTests (sprintf "watch %s")
+//     |> Seq.iter (invokeAsync >> Async.Catch >> Async.Ignore >> Async.Start)
+
+//     printfn "Press enter to stop..."
+//     Console.ReadLine() |> ignore
+
+//     if isWindows |> not then
+//         startedProcesses
+//         |> Seq.iter(fst >> killParentsAndChildren >> ignore )
+//     else
+//         //Hope windows handles this right?
+//         ()
+//     )
+
+Target "Pack" (fun _ ->
+    let releaseNotes = LoadReleaseNotes "RELEASE_NOTES.md"
+
+    appReferences
     |> Seq.iter (fun proj ->
         DotNetCli.Pack (fun c ->
             { c with
@@ -139,7 +128,7 @@ Target "DotnetPack" (fun _ ->
                 AdditionalArgs =
                     [
                         sprintf "/p:PackageVersion=%s" releaseNotes.NugetVersion
-                        sprintf "/p:PackageReleaseNotes=\"%s\"" (String.Join("\n",releaseNotes.Notes))
+                        sprintf "/p:PackageReleaseNotes=\"%s\"" (String.concat "\n" releaseNotes.Notes)
                     ]
             })
     )
@@ -156,7 +145,8 @@ Target "Publish" (fun _ ->
 
 let release _ =
     let branch = Git.Information.getBranchName ""
-    let version = releaseNotes.NugetVersion
+    let releaseNotes = LoadReleaseNotes "RELEASE_NOTES.md"
+    let version = releaseNotes.NugetVersion //TODO SemVer
     if Git.Information.getBranchName "" <> "master" then failwithf "Not on master, instead on '%s'" branch
 
     StageAll ""
@@ -166,18 +156,23 @@ let release _ =
     Branches.tag "" version
     Branches.pushTag "" "origin" version
 
-Target "ReleaseQuick" release
+// Target "ReleaseQuick" release
 Target "Release" release
 
+
+// --------------------------------------------------------------------------------------
+// Build order
+// --------------------------------------------------------------------------------------
+
 "Clean"
-  ==> "DotnetRestore"
-  ==> "DotnetBuild"
-  ==> "DotnetTest"
-  ==> "DotnetPack"
+  ==> "InstallDotNetCLI"
+  ==> "Restore"
+  ==> "Build"
+  ==> "Pack"
   ==> "Publish"
   ==> "Release"
 
-"DotnetRestore"
+"Restore"
  ==> "WatchTests"
 
-RunTargetOrDefault "DotnetPack"
+RunTargetOrDefault "Pack"

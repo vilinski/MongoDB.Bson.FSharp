@@ -22,6 +22,7 @@
     <Compile Include="TypeShape/StagingExtensions.fs" />
     <Compile Include="TypeShape/MkSerializer.fs" />
     <Compile Include="MongoDB.Bson.FSharp.fs" />
+    <Compile Include="MongoDB.Bson.Diff.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

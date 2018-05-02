@@ -349,6 +349,10 @@ module BsonExtensionMethods =
     /// Deserializes an object from a BSON byte array
     let fromBsonArray (array: byte array) = BsonSerializer.Deserialize array
 
-module Say =
-    let hello name =
-        sprintf "Hello %s" name
+    /// constructs a BsonElement from name and value pair
+    let elem (name: string, value:BsonValue) =
+        BsonElement(name, value)
+
+    /// constructs a BsonDocument from sequence of name-value pairs
+    let doc (elems: (string*BsonValue) seq) =
+        elems |> Seq.map elem |> BsonDocument

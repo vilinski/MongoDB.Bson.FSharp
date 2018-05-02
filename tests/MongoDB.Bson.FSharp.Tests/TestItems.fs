@@ -21,21 +21,23 @@ type TestItems =
     {
         testItems: TestItem list
     }
-let testItems =
 
-    let parent =
-        {
-            Id = 12345
-            Name = "Adron"
-            Salary = 13000m
-            Array = [|10;20;30|]
-            RecursiveOpt = None
-            Union = Result ("just", 5)
-            MapStringInt = [("one", 1);("two", 2)] |> Map.ofList
-            MapIntString = [(5, "five"); (1, "one")] |> Map.ofList
-            SetInt = Set.empty
-            SetOptionInt = Set.empty
-        }
+let testItem =
+    {
+        Id = 12345
+        Name = "Adron"
+        Salary = 13000m
+        Array = [|10;20;30|]
+        RecursiveOpt = None
+        Union = Result ("just", 5)
+        MapStringInt = [("one", 1);("two", 2)] |> Map.ofList
+        MapIntString = [(5, "five"); (1, "one")] |> Map.ofList
+        SetInt = Set.empty
+        SetOptionInt = Set.empty
+    }
+
+let testItems =
+    let parent = testItem
     {
         testItems =
             [

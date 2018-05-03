@@ -168,11 +168,12 @@ Target "Release" release
   ==> "InstallDotNetCLI"
   ==> "Restore"
   ==> "Build"
+  ==> "Test"
   ==> "Pack"
   ==> "Publish"
   ==> "Release"
 
-"Restore"
- ==> "WatchTests"
+// "Restore"
+//  ==> "WatchTests"
 
 RunTargetOrDefault "Pack"

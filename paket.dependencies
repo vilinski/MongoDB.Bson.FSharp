@@ -1,9 +1,9 @@
-source https://nuget.org/api/v2
+source https://api.nuget.org/v3/index.json
 
 storage: none
 nuget MongoDB.Bson
 nuget Expecto
 
 group Build
-    source https://nuget.org/api/v2
+    source https://api.nuget.org/v3/index.json
     nuget FAKE

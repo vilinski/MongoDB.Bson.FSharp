@@ -17,10 +17,6 @@
     <RepositoryUrl>https://github.com/vilinski/MongoDB.Bson.FSharp</RepositoryUrl>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="TypeShape/TypeShape.fs" />
-    <Compile Include="TypeShape/MiscUtils.fs" />
-    <Compile Include="TypeShape/StagingExtensions.fs" />
-    <Compile Include="TypeShape/MkSerializer.fs" />
     <Compile Include="MongoDB.Bson.FSharp.fs" />
     <Compile Include="MongoDB.Bson.Diff.fs" />
   </ItemGroup>

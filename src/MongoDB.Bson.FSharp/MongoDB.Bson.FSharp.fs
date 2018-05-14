@@ -87,7 +87,7 @@ type OptionConvention() =
     inherit ConventionBase("F# Option Type")
 
     interface IMemberMapConvention with
-        member this.Apply(memberMap) =
+        member __.Apply(memberMap) =
             let objType = memberMap.MemberType
             if IsOption objType then
                 memberMap.SetDefaultValue None |> ignore
@@ -97,7 +97,7 @@ type RecordConvention() =
     inherit ConventionBase("F# Record Type")
 
     interface IClassMapConvention with
-        member this.Apply(classMap) =
+        member __.Apply(classMap) =
             let objType = classMap.ClassType
 
             if IsRecord objType then
@@ -118,7 +118,7 @@ type DictionaryRepresentationConvention(representation : DictionaryRepresentatio
     inherit ConventionBase("Dictionary representation convention")
 
     interface IMemberMapConvention with
-        member this.Apply(memberMap) =
+        member __.Apply(memberMap) =
             printfn "try apply dict convention to %A.%s (%s)"
                 memberMap.ClassMap.ClassType.FullName
                 memberMap.MemberName
@@ -181,7 +181,7 @@ type DiscriminatedUnionSerializer<'t>() =
         |> Seq.toArray
         |> Array.rev
 
-    override this.Deserialize(context, args): 't =
+    override __.Deserialize(context, args): 't =
         context.Reader.ReadStartDocument()
 
         context.Reader.ReadName(caseFieldName)
@@ -198,7 +198,7 @@ type DiscriminatedUnionSerializer<'t>() =
 
         FSharpValue.MakeUnion(union, items) :?> 't
 
-    override this.Serialize(context, args, value) =
+    override __.Serialize(context, args, value) =
         let case, fields = FSharpValue.GetUnionFields(value, typeof<'t>)
 
         context.Writer.WriteStartDocument()
@@ -218,12 +218,12 @@ type OptionSerializer<'a when 'a: equality>() =
 
     let cases = GetUnionCases typeof<'a option>
 
-    override this.Serialize(context, _args, value) =
+    override __.Serialize(context, _args, value) =
         match value with
         | None -> BsonSerializer.Serialize(context.Writer, null)
         | Some x -> BsonSerializer.Serialize(context.Writer, x)
 
-    override this.Deserialize(context, _args) =
+    override __.Deserialize(context, _args) =
         let genericTypeArgument = typeof<'a>
 
         let (case, args) =
@@ -239,11 +239,10 @@ type OptionSerializer<'a when 'a: equality>() =
 type ListSerializer<'a>() =
     inherit SerializerBase<'a list>()
     let itemSerializer = lazy (BsonSerializer.SerializerRegistry.GetSerializer<'a>())
-
-    override this.Serialize(context, args, value) =
+    override __.Serialize(context, _, value) =
         serializeSeq context itemSerializer.Value value
 
-    override this.Deserialize(context, args) =
+    override __.Deserialize(context, _) =
         deserializeSeq context itemSerializer.Value |> List.ofSeq
 
 type MapSerializer<'k, 'v when 'k: comparison>() =
@@ -257,7 +256,7 @@ type MapSerializer<'k, 'v when 'k: comparison>() =
         DictionaryInterfaceImplementerSerializer<System.Collections.Generic.Dictionary<'k, 'v>>()
             .WithDictionaryRepresentation(representation)
 
-    override this.Serialize(context, args, value) =
+    override __.Serialize(context, args, value) =
         let dictValue =
             value
             |> Map.toSeq<'k, 'v>
@@ -265,7 +264,7 @@ type MapSerializer<'k, 'v when 'k: comparison>() =
             |> System.Collections.Generic.Dictionary<'k, 'v>
         serializer.Serialize(context, args, dictValue)
 
-    override this.Deserialize(context, args) =
+    override __.Deserialize(context, args) =
         serializer.Deserialize(context, args)
         |> Seq.map (|KeyValue|)
         |> Map.ofSeq<'k,'v>
@@ -274,17 +273,17 @@ type SetSerializer<'a when 'a: comparison>() =
     inherit SerializerBase<'a Set>()
 
     let itemSerializer = lazy (BsonSerializer.SerializerRegistry.GetSerializer<'a>())
-    override this.Serialize(context, args, value) =
+    override __.Serialize(context, _, value) =
         serializeSeq context itemSerializer.Value value
 
-    override this.Deserialize(context, args) =
+    override __.Deserialize(context, _) =
         deserializeSeq context itemSerializer.Value |> Set.ofSeq
 
 type FSharpTypeSerializationProvider() =
     let createSerializer (objType:Type) =
         Activator.CreateInstance(objType) :?> IBsonSerializer
     interface IBsonSerializationProvider with
-        member this.GetSerializer(objType) =
+        member __.GetSerializer(objType) =
             if IsOption objType then
                 typedefof<OptionSerializer<_>>.MakeGenericType (objType.GetGenericArguments())
                 |> createSerializer

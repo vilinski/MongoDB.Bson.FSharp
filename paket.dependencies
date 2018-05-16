@@ -1,6 +1,5 @@
 source https://api.nuget.org/v3/index.json
 
-storage: none
 nuget MongoDB.Bson
 nuget Expecto
 nuget TypeShape

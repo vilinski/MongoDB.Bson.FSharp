@@ -1,9 +1,19 @@
 source https://api.nuget.org/v3/index.json
 
 nuget MongoDB.Bson
-nuget Expecto
 nuget TypeShape
 
+group  Test
+    source https://api.nuget.org/v3/index.json
+    storage: none
+    nuget Expecto
+
+// [ FAKE GROUP ]
 group Build
     source https://api.nuget.org/v3/index.json
-    nuget FAKE
+    storage: none
+    nuget Fake.Core.ReleaseNotes
+    nuget Fake.Core.Target
+    nuget Fake.DotNet.Cli
+    nuget Fake.DotNet.Paket
+    nuget Fake.Tools.Git

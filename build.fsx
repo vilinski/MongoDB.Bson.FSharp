@@ -2,103 +2,82 @@
 // FAKE build script
 // --------------------------------------------------------------------------------------
 
-#r "./packages/build/FAKE/tools/FakeLib.dll"
+// #r "./packages/build/FAKE/tools/FakeLib.dll"
+#r "paket: groupref Build //"
+// #r "netstandard"
+#if !FAKE
+  #r "Facades/netstandard"
+#endif
+#load ".fake/build.fsx/intellisense.fsx"
 
 open System
-open Fake
-open Fake.Git
-open Fake.ReleaseNotesHelper
+open System.IO
+open Fake.Core
+open Fake.Core.TargetOperators
+open Fake.DotNet
+open Fake.IO
+open Fake.IO.FileSystemOperators
+open Fake.IO.Globbing.Operators
+open Fake.Tools
 
 // --------------------------------------------------------------------------------------
 // Build variables
 // --------------------------------------------------------------------------------------
 
-let appReferences = !! "/**/*.??proj"
-let dotnetcliVersion = "2.1.105"
-let mutable dotnetExePath = "dotnet"
+let appReferences = !! "**/*.??proj"
 
 // --------------------------------------------------------------------------------------
 // Helpers
 // --------------------------------------------------------------------------------------
 
-let run timeout cmd args dir =
-    //let timeout = TimeSpan.FromMinutes 1.
-    if execProcess (fun info ->
-        info.FileName <- cmd
-        info.Arguments <- args
-        if not (String.IsNullOrWhiteSpace dir) then
-            info.WorkingDirectory <- dir
-    ) timeout |> not then
-        failwithf "Error while running '%s' with args: %s" cmd args
-
-let runDotnet workingDir args =
-    let result =
-        ExecProcess (fun info ->
-            info.FileName <- dotnetExePath
-            if not (String.IsNullOrWhiteSpace workingDir) then
-                info.WorkingDirectory <- workingDir
-            info.Arguments <- args) TimeSpan.MaxValue
-    if result <> 0 then failwithf "dotnet %s failed" args
-
-
-let pkill args =
-    run TimeSpan.MaxValue "pkill" args ""
-
-let killParentsAndChildren processId =
-    sprintf "-P %d" processId |> pkill
+let run timeout cmd args workingDir =
+    let exitCode =
+        Process.execWithResult
+            (fun info ->
+                { info with
+                    FileName = cmd
+                    Arguments = args
+                    WorkingDirectory =
+                        if String.IsNullOrWhiteSpace workingDir
+                        then info.WorkingDirectory
+                        else workingDir
+                }
+                ) timeout
+    if not exitCode.OK then
+        exitCode.Errors
+        |> String.concat Environment.NewLine
+        |> failwithf "Error while running '%s %s': %s" cmd args
 
 // --------------------------------------------------------------------------------------
 // Targets
 // --------------------------------------------------------------------------------------
 
-Target "Clean" (fun _ ->
-    ["bin"; "obj"; "temp" ;"dist"]
-    |> DeleteDirs
-
+Target.create "Clean" <| fun _ ->
     appReferences
     |> Seq.collect(fun p ->
         ["bin";"obj"]
         |> Seq.map(fun sp ->
-             IO.Path.GetDirectoryName p </> sp)
+             Path.GetDirectoryName p </> sp)
         )
-    |> CleanDirs
-    )
+    |> Shell.cleanDirs
 
-Target "InstallDotNetCLI" (fun _ ->
-    dotnetExePath <- DotNetCli.InstallDotNetSDK dotnetcliVersion
-    )
+Target.create "Restore" <| fun _ ->
+    DotNet.restore id ""
 
-Target "Restore" (fun _ ->
-    runDotnet "." "restore"
-    // appReferences
-    // |> Seq.iter (fun p ->
-    //     let dir = System.IO.Path.GetDirectoryName p
-    //     runDotnet dir "restore"
-    // )
-    )
+Target.create "Build" <| fun _ ->
+    DotNet.build id ""
 
-Target "Build" (fun _ ->
-    runDotnet "" "build"
-    // appReferences
-    // |> Seq.iter (fun p ->
-    //     let dir = System.IO.Path.GetDirectoryName p
-    //     runDotnet dir "build"
-    // )
-    )
-
-
-let invoke f = f ()
-let invokeAsync f = async { f () }
-
-Target "Test" (fun _ ->
+Target.create "Test" <| fun _ ->
     !! "**/*.Tests.??proj"
-    |> Seq.map System.IO.Path.GetDirectoryName
-    |> Seq.iter (fun dir ->
-        runDotnet dir "run --framework netcoreapp2.0" // why cli asks for framework?
+    |> Seq.iter (fun p ->
+        Trace.tracefn "Test %s" p
+        let args = sprintf "--project %s -- --summary --sequenced" p
+        DotNet.exec id "run" args |> Trace.tracefn "Test result: %A"
+        // dotnetWith p "run" "--framework netcoreapp2.0" // why cli asks for framework?
+        // |> ignore
         )
     // runTests id
     // |> Seq.iter (invoke)
-)
 
 // Target "WatchTests" (fun _ ->
 //     runTests (sprintf "watch %s")
@@ -115,49 +94,57 @@ Target "Test" (fun _ ->
 //         ()
 //     )
 
-Target "Pack" (fun _ ->
-    let releaseNotes = LoadReleaseNotes "RELEASE_NOTES.md"
-
+Target.create "Pack" <| fun _ ->
+    let releaseNotes = ReleaseNotes.load "RELEASE_NOTES.md"
+    let extraArgs =
+        [ sprintf "/p:PackageVersion=%s" releaseNotes.NugetVersion
+          sprintf "/p:PackageReleaseNotes=\"%s\"" (String.concat "\n" releaseNotes.Notes)
+          "/m:1"
+        ] |> String.concat " "
     appReferences
     |> Seq.iter (fun proj ->
-        DotNetCli.Pack (fun c ->
+        DotNet.pack (fun c ->
             { c with
-                Project = proj
-                Configuration = "Release"
-                OutputPath = IO.Directory.GetCurrentDirectory() @@ "dist"
-                AdditionalArgs =
-                    [
-                        sprintf "/p:PackageVersion=%s" releaseNotes.NugetVersion
-                        sprintf "/p:PackageReleaseNotes=\"%s\"" (String.concat "\n" releaseNotes.Notes)
-                    ]
-            })
+                Configuration = DotNet.Release
+                OutputPath = IO.Directory.GetCurrentDirectory() </> "dist" |> Some
+                Common = { c.Common with CustomParams = Some extraArgs }
+                VersionSuffix = c.VersionSuffix
+            }
+        ) proj
+        // DotNetCli.Pack (fun c ->
+        //     { c with
+        //         Project = proj
+        //         Configuration = "Release"
+        //         OutputPath = IO.Directory.GetCurrentDirectory() @@ "dist"
+        //         AdditionalArgs =
+        //             [
+        //                 sprintf "/p:PackageVersion=%s" releaseNotes.NugetVersion
+        //                 sprintf "/p:PackageReleaseNotes=\"%s\"" (String.concat "\n" releaseNotes.Notes)
+        //             ]
+        //     })
     )
-)
 
-Target "Publish" (fun _ ->
-    Paket.Push(fun c ->
+Target.create "Publish" <| fun _ ->
+    Paket.push(fun c ->
             { c with
                 PublishUrl = "https://www.nuget.org"
                 WorkingDir = "dist"
             }
         )
-)
-
-let release _ =
-    let branch = Git.Information.getBranchName ""
-    let releaseNotes = LoadReleaseNotes "RELEASE_NOTES.md"
-    let version = releaseNotes.NugetVersion //TODO SemVer
-    if Git.Information.getBranchName "" <> "master" then failwithf "Not on master, instead on '%s'" branch
-
-    StageAll ""
-    Git.Commit.Commit "" (sprintf "Bump version to %s" version)
-    Branches.push ""
-
-    Branches.tag "" version
-    Branches.pushTag "" "origin" version
 
 // Target "ReleaseQuick" release
-Target "Release" release
+Target.create "Release" <| fun _ ->
+    let branch = Git.Information.getBranchName ""
+    let releaseNotes = ReleaseNotes.load "RELEASE_NOTES.md"
+    let version = releaseNotes.SemVer.AsString
+    if Git.Information.getBranchName "" <> "master" then failwithf "Not on master, instead on '%s'" branch
+
+    Git.Staging.stageAll ""
+    Git.Commit.exec "" (sprintf "Bump version to %s" version)
+    Git.Branches.push ""
+
+    Git.Branches.tag "" version
+    Git.Branches.pushTag "" "origin" version
 
 
 // --------------------------------------------------------------------------------------
@@ -165,7 +152,7 @@ Target "Release" release
 // --------------------------------------------------------------------------------------
 
 "Clean"
-  ==> "InstallDotNetCLI"
+//   ==> "InstallDotNetCLI"
   ==> "Restore"
   ==> "Build"
   ==> "Test"
@@ -176,4 +163,4 @@ Target "Release" release
 // "Restore"
 //  ==> "WatchTests"
 
-RunTargetOrDefault "Pack"
+Target.runOrDefault "Pack"

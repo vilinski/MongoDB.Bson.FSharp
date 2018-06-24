@@ -1,26 +1,44 @@
 language: csharp
-sudo: required
 dist: trusty
+sudo: false
+dotnet: 2.1.301
 
-dotnet:
-  - 2.1.105
-  - latest
-# mono:
-#   - 4.6.1
-#   - 4.8.1
-#   - latest # => "stable release"
-#   # - weekly # => "latest commits"
-os:
-  - linux
-  - osx
+matrix:
+  fast_finish: true
+
+  include:
+    - os: linux
+      mono: 5.8.0
+    - os: linux
+      mono: weekly
+    - os: linux
+      mono: latest
+    - os: osx
+      osx_image: xcode9.3
+      mono: 5.4.1
+    - os: osx
+      osx_image: xcode9.3
+      mono: 5.8.1
+    - os: osx
+      osx_image: xcode9.3
+      mono: latest
+
+  allow_failures:
+    - mono: weekly # latest commit
+    - mono: latest # "stable" release
+
+addons:
+  apt:
+    packages:
+    - dotnet-sharedframework-microsoft.netcore.app-1.1.2
+
+env:
+  global:
+    - DOTNET_CLI_TELEMETRY_OPTOUT: 1
+    - DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+before_script:
+ - dotnet tool install fake-cli -g
 
 script:
-  - ./build.sh
-
-# matrix:
-#   allow_failures:
-#     - mono: latest
-#     - mono: alpha
-#     - mono: beta
-#     - mono: weekly
-#     - os: osx # times out too often, disable at own risk
+  - fake build

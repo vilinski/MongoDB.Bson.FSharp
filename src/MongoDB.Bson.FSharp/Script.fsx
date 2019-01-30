@@ -1,11 +1,9 @@
 // Learn more about F# at http://fsharp.org. See the 'F# Tutorial' project
 // for more guidance on F# programming.
 
-#I "bin/Release/net461"
 #r "FSharp.Core.dll"
 #r "MongoDB.Bson.dll"
-#r "MongoDB.Bson.FSharp.dll"
-open MongoDB.Bson.IO
+#r "bin/Debug/netstandard2.0/MongoDB.Bson.FSharp.dll"
 open MongoDB.Bson.FSharp
 open MkSerializer
 

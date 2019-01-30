@@ -1,5 +1,28 @@
 source https://www.nuget.org/api/v2
 
-group Build
+nuget MongoDB.Bson
+nuget TypeShape
+
+group Test
     source https://www.nuget.org/api/v2
+    nuget Expecto
+    nuget YoloDev.Expecto.TestSdk
+    nuget Microsoft.NET.Test.Sdk
+
+group old
+    source https://api.nuget.org/v3/index.json
     nuget FAKE
+
+// [ FAKE GROUP ]
+group Build
+    storage none
+    source https://api.nuget.org/v3/index.json
+    nuget Fake.DotNet.Cli
+    nuget Fake.DotNet.AssemblyInfoFile
+    nuget Fake.DotNet.Paket
+    nuget Fake.IO.FileSystem
+    nuget Fake.Core.Environment
+    nuget Fake.Core.Process
+    nuget Fake.Core.ReleaseNotes
+    nuget Fake.Core.Target
+    nuget Fake.Tools.Git

@@ -1,34 +1,12 @@
-<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp1.1;net45;net461</TargetFrameworks>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="TestItems.fs" />
-    <Compile Include="Tests.fs" />
-    <Compile Include="Main.fs" />
+    <Compile Include="Program.fs" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)'=='net45'">
-    <PackageReference Include="Expecto" Version="4.1.*" />
-    <PackageReference Include="FSharp.Core" Version="4.1.*" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)'=='net461'">
-    <PackageReference Include="Expecto" Version="5.0.*" />
-    <PackageReference Include="FSharp.Core" Version="4.2.*" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)'=='netcoreapp1.1'">
-    <PackageReference Include="Expecto" Version="5.0.*" />
-    <PackageReference Include="FSharp.Core" Version="4.2.*" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="MongoDB.Bson" Version="*" />
-    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
-    <ProjectReference Include="../../src/MongoDB.Bson.FSharp/MongoDB.Bson.FSharp.fsproj" />
-    <DotNetCliToolReference Include="dotnet-mono" Version="*" />
-    <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="1.0.0" />
-  </ItemGroup>
 </Project>
-

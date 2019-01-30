@@ -1,13 +1,13 @@
-<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.6;net45;net461</TargetFrameworks>
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup>
     <Title>MongoDB.Bson.FSharp</Title>
     <Summary>MongoDB Bson serializers for F# types</Summary>
     <Description>Official MongoDB.Bson package contains no preconfigured serializers supporting typical F# types. This package tries to close the gap</Description>
-    <!-- summary is not migrated from project.json, but you can use the <Description> property for that if needed. -->
     <PackageTags>F#, FSharp, MongoDB, Bson</PackageTags>
     <PackageProjectUrl>https://github.com/vilinski/MongoDB.Bson.FSharp</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/vilinski/MongoDB.Bson.FSharp/blob/master/LICENSE.md</PackageLicenseUrl>
@@ -15,32 +15,14 @@
     <RepositoryType>git</RepositoryType>
     <Authors>Andreas Vilinski &lt;vilinski@yahoo.de&gt;</Authors>
     <RepositoryUrl>https://github.com/vilinski/MongoDB.Bson.FSharp</RepositoryUrl>
-    <!-- owners is not supported in MSBuild -->
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="TypeShape/TypeShape.fs" />
-    <Compile Include="TypeShape/MiscUtils.fs" />
-    <Compile Include="TypeShape/StagingExtensions.fs" />
     <Compile Include="MkSerializer.fs" />
     <Compile Include="MongoDB.Bson.FSharp.fs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)'=='net45'">
-    <PackageReference Include="FSharp.Core" Version="4.0.0.*" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)'=='net461'">
-    <PackageReference Include="FSharp.Core" Version="4.2.*" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)'=='netstandard1.6'">
-    <PackageReference Include="FSharp.Core" Version="4.2.*" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="MongoDB.Bson" Version="*" />
-    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
-  </ItemGroup>
-
-
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

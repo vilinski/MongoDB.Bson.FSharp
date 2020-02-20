@@ -252,6 +252,9 @@ paket-files/
 .idea/
 *.sln.iml
 
+# Ionide
+.ionide/
+
 TestResults.xml
 
 dist/

@@ -38,6 +38,7 @@ env:
     - DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
 
 before_script:
+ - export PATH=$PATH:/home/travis/.dotnet/tools
  - dotnet tool install fake-cli -g
 
 script:

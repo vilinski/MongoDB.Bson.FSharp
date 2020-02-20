@@ -5,6 +5,7 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup>
+    <Version>0.0.4-beta</Version>
     <Title>MongoDB.Bson.FSharp</Title>
     <Summary>MongoDB Bson serializers for F# types</Summary>
     <Description>Official MongoDB.Bson package contains no preconfigured serializers supporting typical F# types. This package tries to close the gap</Description>

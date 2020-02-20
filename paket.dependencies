@@ -7,6 +7,8 @@ group  Test
     source https://api.nuget.org/v3/index.json
     storage: none
     nuget Expecto
+    nuget Microsoft.NET.Test.Sdk
+    nuget YoloDev.Expecto.TestSdk
 
 // [ FAKE GROUP ]
 group Build

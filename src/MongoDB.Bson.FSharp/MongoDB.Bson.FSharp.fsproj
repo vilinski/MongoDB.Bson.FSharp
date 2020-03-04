@@ -5,13 +5,13 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup>
-    <Version>0.0.4-beta</Version>
+    <Version>0.0.4</Version>
     <Title>MongoDB.Bson.FSharp</Title>
     <Summary>MongoDB Bson serializers for F# types</Summary>
     <Description>Official MongoDB.Bson package contains no preconfigured serializers supporting typical F# types. This package tries to close the gap</Description>
     <PackageTags>F#, FSharp, MongoDB, Bson</PackageTags>
     <PackageProjectUrl>https://github.com/vilinski/MongoDB.Bson.FSharp</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/vilinski/MongoDB.Bson.FSharp/blob/master/LICENSE.md</PackageLicenseUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
     <Authors>Andreas Vilinski &lt;vilinski@yahoo.de&gt;</Authors>

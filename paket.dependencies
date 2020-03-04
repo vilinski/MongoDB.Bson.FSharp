@@ -1,11 +1,16 @@
 source https://api.nuget.org/v3/index.json
+storage: none
+framework: netstandard2.0
 
+nuget FSharp.Core >= 4.3.4
 nuget MongoDB.Bson
 nuget TypeShape
 
 group  Test
     source https://api.nuget.org/v3/index.json
     storage: none
+    framework: netcoreapp2.1, netcoreapp3.1
+
     nuget Expecto
     nuget Microsoft.NET.Test.Sdk
     nuget YoloDev.Expecto.TestSdk
@@ -14,6 +19,8 @@ group  Test
 group Build
     source https://api.nuget.org/v3/index.json
     storage: none
+    framework: netcoreapp3.1
+
     nuget Fake.Core.ReleaseNotes
     nuget Fake.Core.Target
     nuget Fake.DotNet.Cli

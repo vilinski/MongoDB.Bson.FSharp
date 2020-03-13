@@ -1,9 +1,9 @@
 name: publish to MyGet
 
 on:
-  push:
-    branches:
-      - dev
+  on: [push, pull_request]
+  paths:
+    - 'src/**'
 
 jobs:
   build:
@@ -16,13 +16,12 @@ jobs:
       uses: actions/setup-dotnet@v1
     - name: Install paket tool
       run: dotnet tool install -g paket
-    - name: Build with dotnet
+    - name: Test with netcoreapp2.1
+      run: dotnet run -f netcoreapp2.1 -p tests/MongoDB.Bson.FSharp.Tests/MongoDB.Bson.FSharp.Tests.fsproj -- --summary
+    - name: Test with netcoreapp3.1
+      run: dotnet run -f netcoreapp3.1 -p tests/MongoDB.Bson.FSharp.Tests/MongoDB.Bson.FSharp.Tests.fsproj -- --summary
+    - name: Pack
       run: |
         sed -i "s|<Version>\(.*\)</Version>|<Version>\1-dev-$GITHUB_RUN_ID</Version>|" src/MongoDB.Bson.FSharp/MongoDB.Bson.FSharp.fsproj
-        dotnet test --nologo --configuration Release
         dotnet pack --nologo --no-restore --configuration Release -o nuget
-    - name: NuGet push
-      run: |
-        source=https://api.nuget.org/v3/index.json
-        key=${{secrets.NuGet_Key}}
-        dotnet nuget push -s $source -k $key nuget/*.nupkg
+

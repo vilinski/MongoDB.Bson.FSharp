@@ -4,7 +4,6 @@ framework: netstandard2.0
 
 nuget FSharp.Core >= 4.3.4
 nuget MongoDB.Bson
-nuget TypeShape
 
 group  Test
     source https://api.nuget.org/v3/index.json

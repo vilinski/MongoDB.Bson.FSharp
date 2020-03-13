@@ -1,9 +1,12 @@
 name: publish to MyGet
 
 on:
-  on: [push, pull_request]
-  paths:
-    - 'src/**'
+  push:
+    paths:
+      - 'src/**'
+  pull_request:
+    paths:
+      - 'src/**'
 
 jobs:
   build:

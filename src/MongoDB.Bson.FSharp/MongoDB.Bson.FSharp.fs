@@ -169,19 +169,19 @@ type DiscriminatedUnionSerializer<'t>() =
     let valueFieldName = "fields"
     let cases = GetUnionCases typeof<'t>
 
-    let deserBy context args t =
-        BsonSerializer.LookupSerializer(t).Deserialize(context, args)
+    let deserBy context t =
+        BsonSerializer.LookupSerializer(t).Deserialize(context)
 
-    let serBy context args t v =
-        BsonSerializer.LookupSerializer(t).Serialize(context, args, v)
+    let serBy context t v =
+        BsonSerializer.LookupSerializer(t).Serialize(context, v)
 
-    let readItems context args types =
+    let readItems context types =
         types
-        |> Seq.fold(fun state t -> (deserBy context args t) :: state) []
+        |> Seq.fold(fun state t -> (deserBy context t) :: state) []
         |> Seq.toArray
         |> Array.rev
 
-    override __.Deserialize(context, args): 't =
+    override __.Deserialize(context, _args): 't =
         context.Reader.ReadStartDocument()
 
         context.Reader.ReadName(caseFieldName)
@@ -191,27 +191,27 @@ type DiscriminatedUnionSerializer<'t>() =
         context.Reader.ReadName(valueFieldName)
         context.Reader.ReadStartArray()
 
-        let items = readItems context args (union.GetFields() |> Seq.map(fun f -> f.PropertyType))
+        let items = readItems context (union.GetFields() |> Seq.map(fun f -> f.PropertyType))
 
         context.Reader.ReadEndArray()
         context.Reader.ReadEndDocument()
 
         FSharpValue.MakeUnion(union, items) :?> 't
 
-    override __.Serialize(context, args, value) =
+    override __.Serialize(context, _args, value) =
         let case, fields = FSharpValue.GetUnionFields(value, typeof<'t>)
+        let writer = context.Writer
 
-        context.Writer.WriteStartDocument()
-        context.Writer.WriteName(caseFieldName)
-        context.Writer.WriteString(case.Name)
-        context.Writer.WriteStartArray(valueFieldName)
+        writer.WriteStartDocument()
+        writer.WriteString(caseFieldName, case.Name)
+        writer.WriteStartArray valueFieldName
 
         fields
         |> Seq.zip(case.GetFields())
-        |> Seq.iter(fun (field, value) -> serBy context args field.PropertyType value)
+        |> Seq.iter(fun (field, value) -> serBy context field.PropertyType value)
 
-        context.Writer.WriteEndArray()
-        context.Writer.WriteEndDocument()
+        writer.WriteEndArray()
+        writer.WriteEndDocument()
 
 type OptionSerializer<'a when 'a: equality>() =
     inherit SerializerBase<'a option>()
@@ -239,10 +239,10 @@ type OptionSerializer<'a when 'a: equality>() =
 type ListSerializer<'a>() =
     inherit SerializerBase<'a list>()
     let itemSerializer = lazy (BsonSerializer.SerializerRegistry.GetSerializer<'a>())
-    override __.Serialize(context, _, value) =
+    override __.Serialize(context, _args, value) =
         serializeSeq context itemSerializer.Value value
 
-    override __.Deserialize(context, _) =
+    override __.Deserialize(context, _args) =
         deserializeSeq context itemSerializer.Value |> List.ofSeq
 
 type MapSerializer<'k, 'v when 'k: comparison>() =

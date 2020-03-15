@@ -14,6 +14,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/MongoDB.Bson.FSharp/MongoDB.Bson.FSharp.fsproj" />
+    <ProjectReference Include="../../src/MongoDB.Bson.Diff/MongoDB.Bson.Diff.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

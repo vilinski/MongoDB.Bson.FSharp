@@ -1,14 +1,13 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <PropertyGroup>
-    <Version>0.0.4</Version>
-    <Title>MongoDB.Bson.FSharp</Title>
-    <Summary>MongoDB Bson serializers for F# types</Summary>
-    <Description>Official MongoDB.Bson package contains no preconfigured serializers supporting typical F# types. This package tries to close the gap</Description>
+    <Version>0.0.1</Version>
+    <Title>MongoDB.Bson.Diff</Title>
+    <Summary>MongoDB Bson diff</Summary>
+    <Description>Tries to determine the difference between bson values</Description>
     <PackageTags>F#, FSharp, MongoDB, Bson</PackageTags>
     <PackageProjectUrl>https://github.com/vilinski/MongoDB.Bson.FSharp</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -18,7 +17,10 @@
     <RepositoryUrl>https://github.com/vilinski/MongoDB.Bson.FSharp</RepositoryUrl>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="MongoDB.Bson.FSharp.fs" />
+    <Compile Include="MongoDB.Bson.Diff.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MongoDB.Bson.FSharp\MongoDB.Bson.FSharp.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
